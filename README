@@ -1,0 +1,11 @@
+sfpv - Static Function Property Verification
+
+sfpv is a clang based static analysis tool to verify that functions have some
+listed property through the use of annotations and a basic deduction system.
+The primary goal of this program is to show realtime safety bugs in audio
+software, though it should eventually grow to be much more general than this.
+
+Right now the system is in rough shape, though it should become usable with
+time.
+
+--Mark McCurry
