@@ -124,6 +124,10 @@ void ExpandArgv(int argc, const char **argv,
   }
 }
 
+#ifndef CLANG_LOCATION
+#define CLANG_LOCATION "/usr/local/bin/clang"
+#endif
+
 //Create a compiler instance and parse the AST
 void TranslationUnit::collect(GraphBuilder *gb, int argc, const char**argv)
 {
