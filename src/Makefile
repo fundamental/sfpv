@@ -2,9 +2,9 @@ CXX := clang++
 LLVMCOMPONENTS := cppbackend
 RTTIFLAG := -fno-rtti
 #RTTIFLAG :=
-CXXFLAGS := $(shell llvm-config --cxxflags) $(RTTIFLAG) -g
+CLANGLOC := -DCLANG_LOCATION='"$(shell which clang)"'
+CXXFLAGS := $(shell llvm-config --cxxflags) $(RTTIFLAG) -g $(CLANGLOC)
 LLVMLDFLAGS := $(shell llvm-config --ldflags --libs $(LLVMCOMPONENTS))
-EXEC = name
 CLANGLIBS = \
     -lclangFrontend \
     -lclangDriver \
@@ -20,10 +20,10 @@ CLANGLIBS = \
     -lLLVMMC \
     -lLLVMSupport
 
-all: main
-	
-main: main.o TranslationUnit.o Types.o GraphBuilder.o Errors.o
-	$(CXX) -o main main.o TranslationUnit.o Types.o GraphBuilder.o Errors.o $(CLANGLIBS) $(LLVMLDFLAGS)
+all: sfpv
+
+sfpv: main.o TranslationUnit.o Types.o GraphBuilder.o Errors.o
+	$(CXX) -o sfpv main.o TranslationUnit.o Types.o GraphBuilder.o Errors.o $(CLANGLIBS) $(LLVMLDFLAGS)
 
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -c main.cpp
@@ -41,4 +41,4 @@ Errors.o: Errors.cpp
 	$(CXX) $(CXXFLAGS) -c Errors.cpp
 
 clean:
-	-rm -f main *.o *~
+	-rm -f sfpv *.o *~

@@ -140,7 +140,7 @@ void TranslationUnit::collect(GraphBuilder *gb, int argc, const char**argv)
     CompilerInstance &ci = impl->ci;
 
     //Hardcoded llvm system path
-    llvm::sys::Path path("/usr/local/bin/clang");
+    llvm::sys::Path path(CLANG_LOCATION);
 
     clang::TextDiagnosticPrinter* diagnostic_client =
         new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
@@ -205,10 +205,6 @@ void TranslationUnit::collect(GraphBuilder *gb, int argc, const char**argv)
     ci.createFileManager();
     ci.createSourceManager(ci.getFileManager());
     ci.createPreprocessor();
-
-    //Add custom AST consumer to gather callgraph information
-    clang::ASTConsumer *builder = gb->getConsumer(this);
-    ci.setASTConsumer(builder);
     ci.createASTContext();
 
     //Select File
@@ -220,12 +216,13 @@ void TranslationUnit::collect(GraphBuilder *gb, int argc, const char**argv)
     ci.getDiagnosticClient().BeginSourceFile(ci.getLangOpts(),
             &ci.getPreprocessor());
 
-    //Parse
+    //Parse with custom AST consumer to gather callgraph information
+    clang::ASTConsumer *builder = gb->getConsumer(this);
     clang::ParseAST(ci.getPreprocessor(), builder,
             ci.getASTContext());
     errors_init(ci.getDiagnostics());
 }
-        
+
 void *TranslationUnit::getDiagEng(void)
 {
     return &impl->ci.getDiagnostics();

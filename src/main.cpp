@@ -126,16 +126,24 @@ void info(const char *str)
 
 int main(int argc, const char **argv)
 {
+    if(argc == 1) {
+        printf("usage: %s SOURCE-FILES\n", argv[0]);
+        return 1;
+    }
+
     info("Creating GraphBuilder");
     GraphBuilder gb;
 
     info("Setting up CompilerInstance for TranslationUnit");
-    TranslationUnit tu1("../test/test-input.cpp");
-    TranslationUnit tu2("../test/test-input2.cpp");
+    TranslationUnit **tus = new TranslationUnit*[argc-1];
+    for(int i=1; i<argc; ++i) {
+        printf("Adding %s...\n", argv[i]);
+        tus[i-1] = new TranslationUnit(argv[i]);
+    }
 
     info("Collecting Information from TranslationUnit");
-    tu1.collect(&gb, argc, argv);
-    tu2.collect(&gb, argc, argv);
+    for(int i=0; i<argc-1; ++i)
+        tus[i]->collect(&gb, argc, argv);
 
     info("Performing Deductions");
     dlist_find_all(&gb);
@@ -152,5 +160,11 @@ int main(int argc, const char **argv)
     puts("");
     info("Found Results");
     find_inconsistent(&gb);
+
+    //Cleanup
+    for(int i=0; i<argc-1; ++i)
+        delete tus[i];
+    delete[] tus;
+
     return 0;
 }
