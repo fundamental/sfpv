@@ -211,6 +211,11 @@ void TranslationUnit::collect(GraphBuilder *gb, int argc, const char**argv)
     ci.createPreprocessor();
     ci.createASTContext();
 
+    //Initialize preprocessor
+    ci.getPreprocessor().getBuiltinInfo().InitializeBuiltins(
+            ci.getPreprocessor().getIdentifierTable(),
+            ci.getLangOpts());
+
     //Select File
     printf("File Name (%s)\n", impl->name.c_str());
     const FileEntry *pFile = ci.getFileManager().getFile(impl->name);
