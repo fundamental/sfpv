@@ -97,8 +97,9 @@ void dlist_find_all(GraphBuilder *gb)
 }
 
 
-void find_inconsistent(GraphBuilder *gb)
+int find_inconsistent(GraphBuilder *gb)
 {
+    int result = 0; //aka all is safe
     for(auto pair: gb->getFunctions()) {
         FuncEntry e = pair.second;
         if(e.not_realtime_p() && dlist_rt(e.name)) {
@@ -107,6 +108,7 @@ void find_inconsistent(GraphBuilder *gb)
                 << e.FDECL->getQualifiedNameAsString();
 
             dlist_print_path(e.name, gb);
+            result |= 2;
         }
         if(!e.defined_p() && !e.realtime_p() && dlist_rt(e.name)) {
 
@@ -115,8 +117,10 @@ void find_inconsistent(GraphBuilder *gb)
                 << e.FDECL->getQualifiedNameAsString();
 
             dlist_print_path(e.name, gb);
+            result |= 1;
         }
     }
+    return result;
 }
 
 void info(const char *str)
@@ -138,7 +142,7 @@ int main(int argc, const char **argv)
 {
     if(argc == 1) {
         printf("usage: %s SOURCE-FILES\n", argv[0]);
-        return 1;
+        return 255;
     }
 
     info("Creating GraphBuilder");
@@ -173,12 +177,12 @@ int main(int argc, const char **argv)
     dlist_print();
     puts("");
     info("Found Results");
-    find_inconsistent(&gb);
+    int result = find_inconsistent(&gb);
 
     //Cleanup
     for(int i=0; i<argc-1; ++i)
         delete tus[i];
     delete[] tus;
 
-    return 0;
+    return result;
 }
