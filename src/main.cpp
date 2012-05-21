@@ -124,6 +124,16 @@ void info(const char *str)
     printf("[INFO] %s...\n", str);
 }
 
+bool file_exists(const char * filename)
+{
+    if (FILE * file = fopen(filename, "r"))
+    {
+        fclose(file);
+        return true;
+    }
+    return false;
+}
+
 int main(int argc, const char **argv)
 {
     if(argc == 1) {
@@ -136,13 +146,17 @@ int main(int argc, const char **argv)
 
     info("Setting up CompilerInstance for TranslationUnit");
     TranslationUnit **tus = new TranslationUnit*[argc-1];
+    unsigned units = 0;
     for(int i=1; i<argc; ++i) {
-        printf("Adding %s...\n", argv[i]);
-        tus[i-1] = new TranslationUnit(argv[i]);
+        if(file_exists(argv[i])) {
+            printf("Adding %s...\n", argv[i]);
+            tus[units++] = new TranslationUnit(argv[i]);
+        } else
+            printf("Skipping invalid file %s...\n", argv[i]);
     }
 
     info("Collecting Information from TranslationUnit");
-    for(int i=0; i<argc-1; ++i)
+    for(int i=0; i<units; ++i)
         tus[i]->collect(&gb, argc, argv);
 
     info("Performing Deductions");
