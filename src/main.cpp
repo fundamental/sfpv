@@ -146,10 +146,18 @@ bool file_exists(const char * filename)
     return false;
 }
 
+#define USAGE \
+    "Usage: sfpv [-Qvh] [-W whitelist] SOURCE-FILES\n\n" \
+"    -Q\t\t  quiet mode, suppresses non warning/error related output\n" \
+"    -v\t\t  Version\n"\
+"    -h\t\t  help; prints this message\n"\
+"    -W whitelist  uses the whitelist file to provide external annotations\n"
+
+
 const char *whitelist_file = NULL;
-void argument_death(const char *name)
+void print_usage(void)
 {
-    fprintf(stderr, "Usage: %s [-Q] [-W fname] SOURCE-FILES\n", name);
+    fprintf(stderr, USAGE);
     exit(EXIT_FAILURE);
 }
 
@@ -157,6 +165,12 @@ void argument_death(const char *name)
 //as it lists its internal state
 //This option produces a more sane level of output
 bool quiet = false;
+
+void print_version(void)
+{
+    printf("Version %s\n", VERSION);
+    exit(0);
+}
 
 void info(const char *str)
 {
@@ -167,9 +181,9 @@ void info(const char *str)
 int parse_arguments(int argc, char **argv)
 {
     if(argc == 1)
-        argument_death(argv[0]);
+        print_usage();
     int opt;
-    while((opt = getopt(argc, argv, "QW:")) != -1) {
+    while((opt = getopt(argc, argv, "QW:vh")) != -1) {
         switch(opt)
         {
             case 'W':
@@ -178,8 +192,12 @@ int parse_arguments(int argc, char **argv)
             case 'Q':
                 quiet = true;
                 break;
+            case 'v':
+                print_version();
+                break;
+            case 'h':
             default:
-                argument_death(argv[0]);
+                print_usage();
         }
     }
 

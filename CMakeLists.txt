@@ -20,6 +20,7 @@ set (CLANG_LIBRARIES clangFrontend clangDriver clangSerialization  clangParse
 add_definitions (-fno-rtti)
 set (CMAKE_CXX_COMPILER clang++)
 
+add_definitions (-DVERSION="${sfpv_VERSION_MAJOR}.${sfpv_VERSION_MINOR}")
 add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp
     src/TranslationUnit.cpp src/Types.cpp src/main.cpp)
 target_link_libraries (sfpv ${REQ_LLVM_LIBRARIES} ${CLANG_LIBRARIES})
