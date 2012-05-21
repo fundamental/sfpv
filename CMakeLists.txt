@@ -10,6 +10,7 @@ find_package(LLVM)
 include_directories (${LLVM_INCLUDE_DIRS})
 link_directories (${LLVM_LIBRARY_DIRS})
 add_definitions (${LLVM_DEFINITIONS})
+add_definitions (-DCLANG_LOCATION="${LLVM_INSTALL_PREFIX}/bin/clang")
 llvm_map_components_to_libraries (REQ_LLVM_LIBRARIES cppbackend)
 
 #Clang
