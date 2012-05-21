@@ -14,7 +14,9 @@
 
 #include <string>
 #include <cstdio>
+#include <fstream>
 #include <err.h>
+#include <unistd.h>
 
 //C++11 extentions are useful, but setting the standard to be C++11 breaks
 //compilation, so lets just sweep these errors under a rug for now
@@ -123,9 +125,15 @@ int find_inconsistent(GraphBuilder *gb)
     return result;
 }
 
-void info(const char *str)
+void add_manual_annotations(const char *fname, FuncEntries &e)
 {
-    printf("[INFO] %s...\n", str);
+    std::ifstream in(fname);
+    while(in) {
+        std::string word;
+        in >> word;
+        if(e.has(word))
+            e[word].ext_realtime();
+    }
 }
 
 bool file_exists(const char * filename)
@@ -138,12 +146,49 @@ bool file_exists(const char * filename)
     return false;
 }
 
-int main(int argc, const char **argv)
+const char *whitelist_file = NULL;
+void argument_death(const char *name)
 {
-    if(argc == 1) {
-        printf("usage: %s SOURCE-FILES\n", argv[0]);
-        return 255;
+    fprintf(stderr, "Usage: %s [-Q] [-W fname] SOURCE-FILES\n", name);
+    exit(EXIT_FAILURE);
+}
+
+//This program defaults to being very noisy and it will produce pages of output
+//as it lists its internal state
+//This option produces a more sane level of output
+bool quiet = false;
+
+void info(const char *str)
+{
+    if(!quiet)
+        printf("[INFO] %s...\n", str);
+}
+
+int parse_arguments(int argc, char **argv)
+{
+    if(argc == 1)
+        argument_death(argv[0]);
+    int opt;
+    while((opt = getopt(argc, argv, "QW:")) != -1) {
+        switch(opt)
+        {
+            case 'W':
+                whitelist_file = optarg;
+                break;
+            case 'Q':
+                quiet = true;
+                break;
+            default:
+                argument_death(argv[0]);
+        }
     }
+
+    return optind;
+}
+
+int main(int argc, char **argv)
+{
+    int arg_loc = parse_arguments(argc, argv);
 
     info("Creating GraphBuilder");
     GraphBuilder gb;
@@ -151,17 +196,27 @@ int main(int argc, const char **argv)
     info("Setting up CompilerInstance for TranslationUnit");
     TranslationUnit **tus = new TranslationUnit*[argc-1];
     unsigned units = 0;
-    for(int i=1; i<argc; ++i) {
+    for(int i=arg_loc; i<argc; ++i) {
         if(file_exists(argv[i])) {
             printf("Adding %s...\n", argv[i]);
             tus[units++] = new TranslationUnit(argv[i]);
         } else
-            printf("Skipping invalid file %s...\n", argv[i]);
+            warn("Skipping invalid file %s...\n", argv[i]);
+    }
+
+    if(!units) {
+        fprintf(stderr, "Expected valid translation units to parse...\n");
+        exit(EXIT_FAILURE);
     }
 
     info("Collecting Information from TranslationUnit");
     for(int i=0; i<units; ++i)
-        tus[i]->collect(&gb, argc, argv);
+        tus[i]->collect(&gb, argc, (const char**)argv);
+
+    if(whitelist_file) {
+        info("Adding User Specified Annotations");
+        add_manual_annotations(whitelist_file, gb.getFunctions());
+    }
 
     info("Performing Deductions");
     dlist_find_all(&gb);
@@ -169,14 +224,16 @@ int main(int argc, const char **argv)
     info("Printing Generated Information");
 
     //Show overall state
-    info("Function Table");
-    gb.getFunctions().print();
-    info("Call Graph");
-    gb.getCalls().print();
-    info("Deductions");
-    dlist_print();
-    puts("");
-    info("Found Results");
+    if(!quiet) {
+        info("Function Table");
+        gb.getFunctions().print();
+        info("Call Graph");
+        gb.getCalls().print();
+        info("Deductions");
+        dlist_print();
+        puts("");
+        info("Found Results");
+    }
     int result = find_inconsistent(&gb);
 
     //Cleanup

@@ -5,7 +5,7 @@
 
 void FuncEntry::display(void) const
 {
-    printf("%40s\t%d\t%d\t%d\n", name.c_str(), RT, nRT, defined);
+    printf("%40s\t%d\t%d\t%d\n", name.c_str(), RT|ext_RT, nRT, defined);
 }
 
 class FuncEntriesImpl

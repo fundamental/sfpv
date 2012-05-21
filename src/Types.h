@@ -32,13 +32,14 @@ class FuncEntry
         {
         }
         FuncEntry(std::string str, class TranslationUnit *tu, class clang::FunctionDecl *fdecl)
-            :name(str),TU(tu),FDECL(fdecl),RT(false),nRT(false), defined(false)
+            :name(str),TU(tu),FDECL(fdecl),RT(false),ext_RT(false),nRT(false), defined(false)
         {}
 
         void display(void) const;
         void realtime(void) { RT = true; }
+        void ext_realtime(void) {ext_RT = true;}
         void not_realtime(void) { nRT = true; }
-        bool realtime_p(void) {return RT;}
+        bool realtime_p(void) {return RT|ext_RT;}
         bool not_realtime_p(void) {return nRT;}
         void define(void) {defined = true;}
         bool defined_p(void) {return defined;}
@@ -48,6 +49,7 @@ class FuncEntry
         class clang::FunctionDecl *FDECL;
     private:
         bool RT;
+        bool ext_RT;
         bool nRT;
         bool defined;
 };

@@ -83,7 +83,7 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
         gbi->fc.add(caller,callee,gbi->current_tu,ce);
     }
     else
-        puts("odd, we found a fdecl without a callee");
+        warnx("odd, we found a fdecl without a callee, TODO fix this edge case");
 }
 
 bool TopDeclConsumer::HandleTopLevelDecl(clang::DeclGroupRef d) {
