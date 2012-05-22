@@ -36,7 +36,8 @@ bool FuncEntries::has(std::string fname)
 
 void FuncEntries::add(std::string fname, class TranslationUnit *tu, class clang::FunctionDecl *fdecl)
 {
-    impl->fmap[fname] = FuncEntry(fname, tu, fdecl);
+    if(impl->fmap.find(fname) == impl->fmap.end())
+        impl->fmap[fname] = FuncEntry(fname, tu, fdecl);
 }
 
 FuncEntry &FuncEntries::operator[](std::string fname)
