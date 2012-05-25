@@ -179,7 +179,7 @@ void info(const char *str)
         printf("[INFO] %s...\n", str);
 }
 
-static const char *clang_options = NULL;
+static char *clang_options = NULL;
 
 int parse_arguments(int argc, char **argv)
 {

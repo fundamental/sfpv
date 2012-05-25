@@ -110,18 +110,19 @@ void ExpandArgsFromBuf(const char *Arg,
   }
 }
 
-void ExpandArgv(int argc, const char **argv,
+void ExpandArgv(int argc, char **argv,
                 llvm::SmallVectorImpl<const char*> &ArgVector,
                 std::set<std::string> &SavedStrings) {
-  for (int i = 0; i < argc; ++i) {
-    const char *Arg = argv[i];
-    if (Arg[0] != '@') {
-      ArgVector.push_back(SaveStringInSet(SavedStrings, std::string(Arg)));
-      continue;
-    }
+    ArgVector.push_back(SaveStringInSet(SavedStrings, std::string(argv[0])));
 
-    ExpandArgsFromBuf(Arg, ArgVector, SavedStrings);
-  }
+    //Parse arguments delimited by space
+    if(argc==2) {
+        char *ptr = strtok(argv[1], " ");
+        do {
+            ArgVector.push_back(SaveStringInSet(SavedStrings, std::string(ptr)));
+        }while((ptr = strtok(NULL," ")));
+
+    }
 }
 
 #ifndef CLANG_LOCATION
@@ -129,10 +130,10 @@ void ExpandArgv(int argc, const char **argv,
 #endif
 
 //Create a compiler instance and parse the AST
-void TranslationUnit::collect(GraphBuilder *gb, const char *clang_options)
+void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
 {
     int argc = 1;
-    const char *argv[2] = {"sfpv", NULL};
+    char *argv[2] = {"sfpv", NULL};
     if(clang_options != NULL) {
         argc = 2;
         argv[1] = clang_options;
