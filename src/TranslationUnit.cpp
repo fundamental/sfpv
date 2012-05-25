@@ -110,18 +110,20 @@ void ExpandArgsFromBuf(const char *Arg,
   }
 }
 
-void ExpandArgv(int argc, char **argv,
+void ExpandArgv(int argc, const char **argv,
                 llvm::SmallVectorImpl<const char*> &ArgVector,
                 std::set<std::string> &SavedStrings) {
     ArgVector.push_back(SaveStringInSet(SavedStrings, std::string(argv[0])));
 
     //Parse arguments delimited by space
     if(argc==2) {
-        char *ptr = strtok(argv[1], " ");
+        char *data_cpy = strdup(argv[1]);
+        char *ptr = strtok(data_cpy, " ");
         do {
             ArgVector.push_back(SaveStringInSet(SavedStrings, std::string(ptr)));
-        }while((ptr = strtok(NULL," ")));
+        } while((ptr = strtok(NULL," ")));
 
+        free(data_cpy);
     }
 }
 
@@ -133,7 +135,7 @@ void ExpandArgv(int argc, char **argv,
 void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
 {
     int argc = 1;
-    char *argv[2] = {"sfpv", NULL};
+    const char *argv[2] = {"sfpv", NULL};
     if(clang_options != NULL) {
         argc = 2;
         argv[1] = clang_options;
