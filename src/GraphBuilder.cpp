@@ -133,9 +133,9 @@ void GraphBuilderImpl::annotation_check(std::string fname, clang::Decl *decl)
         if(attr->getKind() == clang::attr::Annotate) {
             AnnotateAttr *annote = dyn_cast<AnnotateAttr>(attr);
             const std::string a_string = annote->getAnnotation().str();
-            if(a_string=="RT")
+            if(a_string=="realtime")
                 fe[fname].realtime();
-            if(a_string=="!RT")
+            if(a_string=="!realtime")
                 fe[fname].not_realtime();
         }
     }

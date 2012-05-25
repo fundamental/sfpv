@@ -1,6 +1,6 @@
 #include <cmath>
-#define REALTIME __attribute__((annotate("RT")))
-#define NREALTIME __attribute__((annotate("!RT")))
+#define REALTIME __attribute__((annotate("realtime")))
+#define NREALTIME __attribute__((annotate("!realtime")))
 
 void REALTIME test_functions()
 {

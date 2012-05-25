@@ -1,5 +1,5 @@
-#define REALTIME __attribute__((annotate("RT")))
-#define NREALTIME __attribute__((annotate("!RT")))
+#define REALTIME __attribute__((annotate("realtime")))
+#define NREALTIME __attribute__((annotate("!realtime")))
 #include "test-input2.h"
 
 class TestClass
