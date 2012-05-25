@@ -151,7 +151,8 @@ bool file_exists(const char * filename)
 "    -Q\t\t  quiet mode, suppresses non warning/error related output\n" \
 "    -v\t\t  Version\n"\
 "    -h\t\t  help; prints this message\n"\
-"    -W whitelist  uses the whitelist file to provide external annotations\n"
+"    -W whitelist  uses the whitelist file to provide external annotations\n"\
+"    -C option     pass option directly to clang\n"
 
 
 const char *whitelist_file = NULL;
@@ -178,16 +179,21 @@ void info(const char *str)
         printf("[INFO] %s...\n", str);
 }
 
+static const char *clang_options = NULL;
+
 int parse_arguments(int argc, char **argv)
 {
     if(argc == 1)
         print_usage();
     int opt;
-    while((opt = getopt(argc, argv, "QW:vh")) != -1) {
+    while((opt = getopt(argc, argv, "QC:W:vh")) != -1) {
         switch(opt)
         {
             case 'W':
                 whitelist_file = optarg;
+                break;
+            case 'C':
+                clang_options = strdup(optarg);
                 break;
             case 'Q':
                 quiet = true;
@@ -229,7 +235,7 @@ int main(int argc, char **argv)
 
     info("Collecting Information from TranslationUnit");
     for(int i=0; i<units; ++i)
-        tus[i]->collect(&gb, argc, (const char**)argv);
+        tus[i]->collect(&gb, clang_options);
 
     if(whitelist_file) {
         info("Adding User Specified Annotations");

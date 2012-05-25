@@ -129,11 +129,14 @@ void ExpandArgv(int argc, const char **argv,
 #endif
 
 //Create a compiler instance and parse the AST
-void TranslationUnit::collect(GraphBuilder *gb, int argc, const char**argv)
+void TranslationUnit::collect(GraphBuilder *gb, const char *clang_options)
 {
-    argc = 1;
-    const char *name = "sfpv";
-    argv = &name;
+    int argc = 1;
+    const char *argv[2] = {"sfpv", NULL};
+    if(clang_options != NULL) {
+        argc = 2;
+        argv[1] = clang_options;
+    }
 
     //Setup Clang
     using clang::CompilerInstance;
