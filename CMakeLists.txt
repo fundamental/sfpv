@@ -4,29 +4,30 @@ project (sfpv)
 set (sfpv_VERSION_MAJOR 0)
 set (sfpv_VERSION_MINOR 1)
 
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 #LLVM
-find_package(LLVM)
+find_package(LLVM 3.1 REQUIRED)
 
 include_directories (${LLVM_INCLUDE_DIRS})
 link_directories (${LLVM_LIBRARY_DIRS})
 add_definitions (${LLVM_DEFINITIONS})
 add_definitions (-DCLANG_LOCATION="${LLVM_INSTALL_PREFIX}/bin/clang")
-llvm_map_components_to_libraries (REQ_LLVM_LIBRARIES cppbackend)
 
 #Clang
 set (CLANG_LIBRARIES clangFrontend clangDriver clangSerialization  clangParse
     clangSema  clangAnalysis  clangRewrite  clangEdit  clangAST  clangLex
-    clangBasic  LLVMMC  LLVMSupport)
+    clangBasic)
 add_definitions (-fno-rtti)
 set (CMAKE_CXX_COMPILER clang++)
 
 add_definitions (-DVERSION="${sfpv_VERSION_MAJOR}.${sfpv_VERSION_MINOR}")
 add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp
     src/TranslationUnit.cpp src/Types.cpp src/main.cpp)
-target_link_libraries (sfpv ${REQ_LLVM_LIBRARIES} ${CLANG_LIBRARIES})
+target_link_libraries (sfpv  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
 
-
-#Tests to verify it works
+######################################################################
+#               Tests to verify it works                             #
+######################################################################
 set(SRC ${CMAKE_CURRENT_SOURCE_DIR})
 enable_testing ()
 
