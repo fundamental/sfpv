@@ -11,7 +11,7 @@ void errors_init(clang::DiagnosticsEngine &e)
 {
     error_realtime_saftey_violation =
         e.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                "Realtime saftey violation, %0 called from a safe function");
+                "Realtime safety violation, %0 called from a safe function");
 
     error_realtime_saftey_trace =
         e.getCustomDiagID(clang::DiagnosticsEngine::Note,
@@ -24,5 +24,5 @@ void errors_init(clang::DiagnosticsEngine &e)
     warnn_realtime_saftey_unknown =
         e.getCustomDiagID(clang::DiagnosticsEngine::Warning,
                 "Function %0 was deduced to need to be safe, but it was not marked, nor " \
-                "did it have a funciton body to be processed");
+                "did it have a function body to be processed");
 }
