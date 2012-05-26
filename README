@@ -37,21 +37,23 @@ If the file is annotated, then sfpv will validate the properties, otherwise it
 will be quite useless.
 Below is an example of annotated functions:
 
---------------------------------------------------
-#define REALTIME __attribute__((annotate("RT")))
-#define NREALTIME __attribute__((annotate("!RT")))
+--------------------------------------------------------
+#define REALTIME __attribute__((annotate("realtime")))
+#define NREALTIME __attribute__((annotate("!realtime")))
 
 void REALTIME rt_function(void)
 {}
 void NREALTIME nrt_function(void)
 {}
---------------------------------------------------
+--------------------------------------------------------
 
 Assuming that you have a non-trivial codebase, eventually an annotated function
 will call a library function.
 In order to properly validate functions that contain external function calls, a
 whitelist is utilized.
 This can be supplied to sfpv via the "-W" option.
+If compiler options are needed, they should be passed in a space delimited
+string with the "-C" option.
 
 Lastly if you do not like seeing pages upon pages of output, sfpv has a quiet
 mode, which can be enabled with "-Q".
