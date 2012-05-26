@@ -135,13 +135,35 @@ void add_manual_annotations(const char *fname, FuncEntries &e)
             e[word].ext_realtime();
     }
 }
+bool has_ext(const char *filename, const char *ext)
+{
+    if(!rindex(filename, '.'))
+        return false;
+    return !strcmp(rindex(filename, '.')+1, ext);
+}
 
 bool file_exists(const char * filename)
 {
     if (FILE * file = fopen(filename, "r"))
     {
+        printf("exists: %s\n", filename);
         fclose(file);
-        return true;
+        printf("%s\n", rindex(filename, '.'));
+
+        //Check for extension
+        if(has_ext(filename, "cpp"))
+            return true;
+        if(has_ext(filename, "c"))
+            return true;
+        if(has_ext(filename, "C"))
+            return true;
+        if(has_ext(filename, "cxx"))
+            return true;
+        if(has_ext(filename, "h"))
+            return true;
+
+        //Found nothing
+        return false;
     }
     return false;
 }
