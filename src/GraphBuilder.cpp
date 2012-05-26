@@ -143,6 +143,22 @@ void GraphBuilderImpl::annotation_check(std::string fname, clang::Decl *decl)
 
 bool GraphAstHelper::VisitFunctionDecl(clang::FunctionDecl *fdecl)
 {
+
+    using clang::dyn_cast;
+    clang::CXXMethodDecl *method = dyn_cast<clang::CXXMethodDecl>(fdecl);
+    if(method && method->size_overridden_methods()) {
+        for(auto itr = method->begin_overridden_methods();
+                itr != method->end_overridden_methods(); ++itr)
+        {
+            //FIXME
+            //This only covers the basic cases of virtual methods and it may
+            //give incorrect behavior for nonvirtual methods, further testing
+            //required
+            gbi->fc.add((*itr)->getQualifiedNameAsString(),
+                    method->getQualifiedNameAsString(), gbi->current_tu, NULL);
+        }
+    }
+
     std::string fname = fdecl->getQualifiedNameAsString();
     gbi->fe.add(fname, gbi->current_tu, fdecl);
     if(fdecl->isThisDeclarationADefinition()) {

@@ -35,8 +35,11 @@ void dlist_print_path(std::string func, GraphBuilder *gb)
     for(Deduction d: d_list) {
         if(d.second == func) {
             clang::DiagnosticsEngine *diag = (clang::DiagnosticsEngine *) d.TU->getDiagEng();
-            std::string str = d.CE->getDirectCallee()->getQualifiedNameAsString();
-            diag->Report(d.CE->getLocStart(), error_realtime_saftey_trace) << str;
+            if(d.CE) {
+                std::string str = d.CE->getDirectCallee()->getQualifiedNameAsString();
+                diag->Report(d.CE->getLocStart(), error_realtime_saftey_trace) << str;
+            } else
+                diag->Report(error_realtime_safety_class) << d.second << d.first;
 
             dlist_print_path(d.first, gb);
             return;
@@ -113,6 +116,10 @@ int find_inconsistent(GraphBuilder *gb)
             result |= 2;
         }
         if(!e.defined_p() && !e.realtime_p() && dlist_rt(e.name)) {
+            //Check for function calls [virtual methods]
+            for(auto call : gb->getCalls())
+                if(call.first==e.name)
+                    goto next;
 
             clang::DiagnosticsEngine *diag = (clang::DiagnosticsEngine *) e.TU->getDiagEng();
             diag->Report(e.FDECL->getLocation(), warnn_realtime_saftey_unknown)
@@ -121,6 +128,8 @@ int find_inconsistent(GraphBuilder *gb)
             dlist_print_path(e.name, gb);
             result |= 1;
         }
+next:
+        ;
     }
     return result;
 }

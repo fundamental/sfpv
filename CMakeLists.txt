@@ -47,3 +47,6 @@ set_property (TEST multi-translation-unit PROPERTY PASS_REGULAR_EXPRESSION
 
 #Verify that functions can be externally annotated
 add_test (manual-whitelist sfpv "-W" ${SRC}/data/whitelist.txt ${SRC}/test/math-safety.cpp)
+
+#Verify that virtual methods are handled correctly
+add_test (virtual-calls sfpv  ${SRC}/test/virtual-methods.cpp)
