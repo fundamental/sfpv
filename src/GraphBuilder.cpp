@@ -74,13 +74,49 @@ class GraphBuilderImpl
 
 void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
 {
+    //Note templates are tricky and thus support for them will be quite limited
+    using clang::dyn_cast;
     clang::FunctionDecl *fdecl = ce->getDirectCallee();
     if(fdecl) {
         std::string callee = ce->getDirectCallee()->getQualifiedNameAsString();
         gbi->fc.add(caller,callee,gbi->current_tu,ce);
     }
-    else
-        warnx("odd, we found a fdecl without a callee, TODO fix this edge case");
+    else if(dyn_cast<clang::UnresolvedLookupExpr>(ce->getCallee())) {
+        //Template magic [found in cmath type lookup]
+    }
+    else if(dyn_cast<clang::CXXDependentScopeMemberExpr>(ce->getCallee())) {
+        //More template magic [found in stl iterators]
+    }
+    else if(dyn_cast<clang::DependentScopeDeclRefExpr>(ce->getCallee())) {
+        //Yet more templates [found in stl iter swap template]
+    }
+    else if(dyn_cast<clang::DeclRefExpr>(ce->getCallee())) {
+        //Templates for everyone [this seems to handle possibly overloaded ops]
+    }
+    else if(dyn_cast<clang::CastExpr>(ce->getCallee())) {
+        //Unwanted cast expressions
+    }
+    else if(dyn_cast<clang::CXXPseudoDestructorExpr>(ce->getCallee())) {
+        //TODO Destructors should be checked properly
+    }
+    else if(dyn_cast<clang::CXXUnresolvedConstructExpr>(ce->getCallee())) {
+        //TODO Constructors should be handled properly
+    }
+    else if(dyn_cast<clang::MemberExpr>(ce->getCallee())) {
+        //Not too sure about this one
+    }
+    else if(dyn_cast<clang::UnresolvedMemberExpr>(ce->getCallee())) {
+        //Not too sure about this one
+    }
+    else if(dyn_cast<clang::ParenExpr>(ce->getCallee())) {
+        //This appears to deal with function pointers, this should be checked
+    }
+    else if(dyn_cast<clang::CallExpr>(ce->getCallee())) {
+        //More Function pointer code
+    }
+    else {
+        warnx("Odd, a call expression with unknown semantics was found");
+    }
 }
 
 bool TopDeclConsumer::HandleTopLevelDecl(clang::DeclGroupRef d) {
