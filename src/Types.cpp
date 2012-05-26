@@ -3,6 +3,10 @@
 #include <map>
 #include <set>
 
+//C++11 extentions are useful, but setting the standard to be C++11 breaks
+//compilation, so lets just sweep these errors under a rug for now
+#pragma clang diagnostic ignored "-Wc++11-extensions"
+
 void FuncEntry::display(void) const
 {
     printf("%40s\t%d\t%d\t%d\n", name.c_str(), RT|ext_RT, nRT, defined);

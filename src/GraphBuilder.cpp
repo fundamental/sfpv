@@ -1,6 +1,3 @@
-#define __STDC_CONSTANT_MACROS 1
-#define __STDC_FORMAT_MACROS 1
-#define __STDC_LIMIT_MACROS 1
 #include "GraphBuilder.h"
 #include <clang/AST/StmtVisitor.h>
 #include <clang/AST/RecursiveASTVisitor.h>
@@ -74,7 +71,7 @@ class GraphBuilderImpl
         Fcalls fc;
         class TranslationUnit *current_tu;
 };
-        
+
 void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
 {
     clang::FunctionDecl *fdecl = ce->getDirectCallee();

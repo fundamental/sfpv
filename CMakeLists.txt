@@ -38,7 +38,7 @@ set_property (TEST test-one
     "error: Realtime safety violation, baz called from a safe function.*Function undefined_function was deduced to need to be safe")
 
 #Verify that nothing dies with very complex headers
-add_test (header-includes sfpv ${SRC}/src/main.cpp)
+add_test (header-includes sfpv -C "-D__STDC_CONSTANT_MACROS=1 -D__STDC_FORMAT_MACROS=1 __STDC_LIMIT_MACROS=1" ${SRC}/src/main.cpp)
 
 #Check that information is translated over multiple translation units
 add_test (multi-translation-unit sfpv ${SRC}/test/test-input.cpp ${SRC}/test/test-input2.cpp)
