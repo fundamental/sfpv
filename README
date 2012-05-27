@@ -1,77 +1,75 @@
 sfpv - Static Function Property Verification
+============================================
 
-About
------
+This is a static analysis tool built upon clang to verify annotated function
+properties in C/C++ code. It is primarily intended to verify realtime safety of
+audio processing code, but as the name implies, it shall evolve into something
+much more general with time.
 
-sfpv is a clang based static analysis tool to verify that functions have some
-listed property through the use of annotations and a basic deduction system.
-The primary goal of this program is to show realtime safety bugs in audio
-software, though it should eventually grow to be much more general than this.
 
-Building
---------
+How To Build
+------------
 
-As this project is based upon clang, a recent version of libclang must be
-installed.
-I personally test with the svn version of clang, so I should be able to
-guarantee that it will build with that.
-For instructions for getting a svn image see
-http://clang.llvm.org/get_started.html
+First make sure you have copies of:
 
-Assuming that the clang and llvm header are in place, you can build sfpv with:
+    - llvm/clang 3.1 or better
+    - cmake 2.8 or better
 
------------------
+Then run
+
+-----------------------------------------------
+git clone git://github.com/fundamental/sfpv.git
 cd sfpv
 mkdir build
 cd build
-cmake ..
-make && make test
------------------
+cmake .. && make && make test
+-----------------------------------------------
 
 
-Usage
------
+Basic Usage
+-----------
 
 For basic use of sfpv, just pass the file to be tested as an argument.
 If the file is annotated, then sfpv will validate the properties, otherwise it
 will be quite useless.
 Below is an example of annotated functions:
 
---------------------------------------------------------
-#define REALTIME __attribute__((annotate("realtime")))
-#define NREALTIME __attribute__((annotate("!realtime")))
-
-void REALTIME rt_function(void)
+.sample-code.c
+--------------------------------------------------------------
+void __attribute__((annotate("!realtime"))) nrt_function(void)
 {}
-void NREALTIME nrt_function(void)
-{}
---------------------------------------------------------
+void __attribute__((annotate("realtime"))) rt_function(void)
+{
+    nrt_function();
+}
+--------------------------------------------------------------
 
-Assuming that you have a non-trivial codebase, eventually an annotated function
-will call a library function.
-In order to properly validate functions that contain external function calls, a
-whitelist is utilized.
-This can be supplied to sfpv via the "-W" option.
-If compiler options are needed, they should be passed in a space delimited
-string with the "-C" option.
+Then this program can be tested with
 
-Lastly if you do not like seeing pages upon pages of output, sfpv has a quiet
-mode, which can be enabled with "-Q".
+------------------
+sfpv sample-code.c
+------------------
 
-Todo
-----
-
-Currently sfpv is far from complete and as such, it has a number of missing
-features.
-Some of the known missing features are:
-
-- More formal documentation
-- Handling edge cases, which trigger the "fdecl without a callee" message
-- Handling virtual functions/subclasses in deduction stages
-- Testing current template support
-- Handling C++ headers with .h extension
-- Better base whitelist file
-- Blacklist file (perhaps with reasons why the functions are blacklisted)
-- Better command line argument handling (eg --help or long arguments in general)
+As a result of a realtime function calling a non-realtime function, an error
+will print to indicate the issue.
 
 
+Documentation
+-------------
+
+See doc/User_Manual.txt for more information.
+
+Bug Reporting
+-------------
+
+Please report all bugs to the github issue tracker at:
+
+https://github.com/fundamental/sfpv/issues
+
+If possible include a test case for inclusion in the test suite, as this makes
+fixing bugs much easier.
+
+License
+-------
+
+This program is licenced under the GPL v3 or greater, Copyright Mark McCurry.

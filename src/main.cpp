@@ -175,12 +175,12 @@ bool file_exists(const char * filename)
 }
 
 #define USAGE \
-    "Usage: sfpv [-Qvh] [-W whitelist] SOURCE-FILES\n\n" \
+    "Usage: sfpv [-Qvh] [-W whitelist] [-C options] SOURCE-FILES\n\n" \
 "    -Q\t\t  quiet mode, suppresses non warning/error related output\n" \
 "    -v\t\t  Version\n"\
 "    -h\t\t  help; prints this message\n"\
 "    -W whitelist  uses the whitelist file to provide external annotations\n"\
-"    -C option     pass option directly to clang\n"
+"    -C option     pass options directly to clang\n"
 
 
 const char *whitelist_file = NULL;

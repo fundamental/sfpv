@@ -1,0 +1,104 @@
+sfpv User Manual
+================
+Mark McCurry <mark.d.mccurry@gmail.com>
+:toc:
+:icons:
+:numbers:
+:website: https://fundamental-code.com/sfpv/
+
+Introduction
+------------
+
+sfpv is a clang based static analysis tool to verify that functions have some
+listed property through the use of annotations and a basic deduction system.
+The primary goal of this program is to show realtime safety bugs in audio
+software, though it should eventually grow to be much more general than this.
+
+Program Options
+---------------
+
+*-Q*::
+    Quiet mode; This option suppresses much of the provided diagnostic
+    information. This option will likely be replaced with a verbose option in
+    the future.
+*-v*::
+    Prints the version of the program and exits
+*-h*::
+    Prints the help text and exits
+*-W* File::
+    Accepts a whitelist file of functions that should be assumed safe by sfpv.
+    The whitelist file consists of a series of function names delimited by any
+    whitespace. Note that only one whitelist file may be provided for each
+    invocation.
+*-C* Options::
+    Accepts clang options directly in the form of a string containing clang
+    arguments delimited by spaces. Note that only one Option string can be
+    provided per each invocation.
+
+How to Use sfpv on Real Code
+----------------------------
+
+Ideally sfpv can be applied to existing codebases to find bugs and verify the
+safety of a program. The simplest way to do this is to find the realtime entry
+points of your program (eg. the jack process callback). After these have been
+found, annotate each one with the realtime annotation
+
+--------------------------------------
+__attribute__((annotate("!realtime")))
+--------------------------------------
+
+Once the annotations are in place, run sfpv on all .c/.cpp/.C/.cxx files in the
+source tree, passing in the whitelist file, and command line arguments as
+needed. This will provide a series of warnings about functions called from a
+realtime context, but without definitions. Some of these will be functions that
+are missing from the whitelist and they should be added to remove their warning
+messages. If the codebases has realtime issues, then it should show calls to
+realtime unsafe functions such as malloc, pthread_mutex_lock, or other possibly
+blocking functions. At the time of writing a blacklist does not exist, but seeing
+these functions in a realtime context indicates that there are possible realtime
+safety issues, which can now be worked on, now that they are identified.
+
+Implementation
+--------------
+
+In order to perform the analysis a fairly simple process is currently utilized.
+
+1. Translation Units are one by one into a _GraphBuilder_, which gathers
+   information on which function exist and which functions call other functions.
+   This information is stored in a collection of function entries and function
+   calls. In this stage, it was assumed that the fully qualified name would be
+   sufficient to distinguish between functions, which is the case in C, but it
+   can result in issues in C++.
+
+2. Once the full collection of functions and relations has been gathered by the
+   system, the whitelist can be applied. For each element in the whitelist, the
+   function is marked as safe, which avoids warnings about uncertain functions
+   without definitions. It is also possible to use whitelists on functions that
+   are defined, which would eliminate the need to internally annotate the code.
+   It is uncertain if this is a feature or bug at the current moment.
+
+3. Deductions are then made on this collection of data. The deduction system
+   deduces a function as safe if it is called by safe function and it is not
+   currently marked as safe or unsafe. In effect, this is not too dissimilar from
+   a breadth first search for contradictions.
+
+4. Contradictions are found by checking if a function is either unsafe and
+   deduced safe or undefined with unknown safety and deduced safe. The first
+   case results in an error, while the second case is only a warning.
+
+Roadmap
+-------
+
+Currently sfpv is far from complete and as such, it has a number of missing
+features. While the order that these features should be added is uncertain,
+some of the known missing features are:
+
+- Proper handling of virtual functions/subclasses in deduction stages
+- Basic support for function pointers
+- Testing current template support
+- Handling C++ headers with .h extension
+- Better base whitelist file
+- Allowing multiple whitelist files
+- Blacklist file (perhaps with reasons why the functions are blacklisted)
+- Better command line argument handling (eg --help or long arguments in general)
+- Integration with clang's scan-build tool
