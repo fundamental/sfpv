@@ -220,7 +220,6 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
             ci.getLangOpts());
 
     //Select File
-    printf("File Name (%s)\n", impl->name.c_str());
     const FileEntry *pFile = ci.getFileManager().getFile(impl->name);
     ci.getSourceManager().createMainFileID(pFile);
 
@@ -235,7 +234,7 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
     errors_init(ci.getDiagnostics());
 }
 
-void *TranslationUnit::getDiagEng(void)
+clang::DiagnosticsEngine *TranslationUnit::getDiagEng(void)
 {
     return &impl->ci.getDiagnostics();
 }

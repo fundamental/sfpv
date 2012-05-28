@@ -1,18 +1,18 @@
 #include "GraphBuilder.h"
+#include "FuncEntries.h"
+#include "FuncCalls.h"
+#include <clang/AST/ASTConsumer.h>
 #include <clang/AST/StmtVisitor.h>
 #include <clang/AST/RecursiveASTVisitor.h>
-#include <cstdio>
-#include <iostream>
 #include <err.h>
 
 #pragma clang diagnostic ignored "-Wc++11-extensions"
-#define CHECK(x) do{if(!x) errx(1, "expected '%s'", #x);}while(0)
 
 class GraphStmtHelper :public clang::StmtVisitor<GraphStmtHelper>
 {
     GraphBuilderImpl *gbi;
     std::string caller;
-    
+
     public:
     GraphStmtHelper(GraphBuilderImpl *_gbi, std::string _caller)
         :gbi(_gbi), caller(_caller)
@@ -68,7 +68,7 @@ class GraphBuilderImpl
 
         TopDeclConsumer consume;
         FuncEntries fe;
-        Fcalls fc;
+        FuncCalls fc;
         class TranslationUnit *current_tu;
 };
 
@@ -150,7 +150,7 @@ FuncEntries &GraphBuilder::getFunctions(void) const
     return impl->fe;
 }
 
-Fcalls &GraphBuilder::getCalls(void) const
+FuncCalls &GraphBuilder::getCalls(void) const
 {
     return impl->fc;
 }

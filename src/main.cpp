@@ -1,11 +1,7 @@
-#include <iostream>
-
-#include <llvm/Support/raw_ostream.h>
-
-#include <clang/AST/StmtVisitor.h>
-
 #include "TranslationUnit.h"
-#include "Types.h"
+#include "FuncCalls.h"
+#include "FuncEntries.h"
+#include "Deductions.h"
 #include "GraphBuilder.h"
 #include "Errors.h"
 
@@ -15,122 +11,14 @@
 #include <err.h>
 #include <unistd.h>
 
+
 //C++11 extentions are useful, but setting the standard to be C++11 breaks
 //compilation, so lets just sweep these errors under a rug for now
 #pragma clang diagnostic ignored "-Wc++11-extensions"
 #define CHECK(x) do{if(!x) errx(1, "expected '%s'", #x);}while(0)
 
-typedef CallPair Deduction;
-std::vector<Deduction> d_list;
 
-///////////////////////////////
-//Deduction List Functions   //
-///////////////////////////////
-
-void dlist_print_path(std::string func, GraphBuilder *gb)
-{
-    for(Deduction d: d_list) {
-        if(d.second == func) {
-            clang::DiagnosticsEngine *diag = (clang::DiagnosticsEngine *) d.TU->getDiagEng();
-            if(d.CE) {
-                std::string str = d.CE->getDirectCallee()->getQualifiedNameAsString();
-                diag->Report(d.CE->getLocStart(), error_realtime_saftey_trace) << str;
-            } else
-                diag->Report(error_realtime_safety_class) << d.second << d.first;
-
-            dlist_print_path(d.first, gb);
-            return;
-        }
-    }
-
-    FuncEntry f = gb->getFunctions()[func];
-    clang::DiagnosticsEngine *diag = (clang::DiagnosticsEngine *) f.TU->getDiagEng();
-    diag->Report(f.FDECL->getLocation(), error_realtime_saftey_trace_end) << f.FDECL->getQualifiedNameAsString();
-}
-
-int dlist_length(void)
-{
-    return d_list.size();
-}
-
-void dlist_print(void)
-{
-    for(Deduction d: d_list)
-        printf("%30s :=> %30s\n", d.first.c_str(), d.second.c_str());
-}
-
-bool dlist_rt(std::string fname)
-{
-    for(Deduction d: d_list)
-        if(d.second == fname)
-            return true;
-    return false;
-}
-
-void dlist_add(CallPair c)
-{
-    d_list.push_back(c);
-}
-
-void dlist_deduce(GraphBuilder *gb)
-{
-    FuncEntries &entries = gb->getFunctions();
-    for(auto pair:entries) {
-        FuncEntry e = pair.second;
-        if(!e.realtime_p() && !dlist_rt(e.name))
-            continue;
-
-        //Deduce all children must be realtime
-        for(CallPair c:gb->getCalls()) {
-            if(c.first == e.name && !entries[c.second].realtime_p()
-                    && !dlist_rt(c.second))
-                dlist_add(c);//e.name,c.second);
-        }
-    }
-}
-
-void dlist_find_all(GraphBuilder *gb)
-{
-    int len = 0;
-    do {
-        len = dlist_length();
-        dlist_deduce(gb);
-    } while(len != dlist_length());
-}
-
-
-int find_inconsistent(GraphBuilder *gb)
-{
-    int result = 0; //aka all is safe
-    for(auto pair: gb->getFunctions()) {
-        FuncEntry e = pair.second;
-        if(e.not_realtime_p() && dlist_rt(e.name)) {
-            clang::DiagnosticsEngine *diag = (clang::DiagnosticsEngine *) e.TU->getDiagEng();
-            diag->Report(e.FDECL->getLocation(), error_realtime_saftey_violation)
-                << e.FDECL->getQualifiedNameAsString();
-
-            dlist_print_path(e.name, gb);
-            result |= 2;
-        }
-        if(!e.defined_p() && !e.realtime_p() && dlist_rt(e.name)) {
-            //Check for function calls [virtual methods]
-            for(auto call : gb->getCalls())
-                if(call.first==e.name)
-                    goto next;
-
-            clang::DiagnosticsEngine *diag = (clang::DiagnosticsEngine *) e.TU->getDiagEng();
-            diag->Report(e.FDECL->getLocation(), warnn_realtime_saftey_unknown)
-                << e.FDECL->getQualifiedNameAsString();
-
-            dlist_print_path(e.name, gb);
-            result |= 1;
-        }
-next:
-        ;
-    }
-    return result;
-}
-
+//Perform manual annotations to the function entries
 void add_manual_annotations(const char *fname, FuncEntries &e)
 {
     std::ifstream in(fname);
@@ -140,7 +28,10 @@ void add_manual_annotations(const char *fname, FuncEntries &e)
         if(e.has(word))
             e[word].ext_realtime();
     }
+    in.close();
 }
+
+//Verify the extention of a file
 bool has_ext(const char *filename, const char *ext)
 {
     if(!rindex(filename, '.'))
@@ -148,13 +39,12 @@ bool has_ext(const char *filename, const char *ext)
     return !strcmp(rindex(filename, '.')+1, ext);
 }
 
-bool file_exists(const char * filename)
+//Verify a file exists with a known extention
+bool file_exists(const char *filename)
 {
     if (FILE * file = fopen(filename, "r"))
     {
-        printf("exists: %s\n", filename);
         fclose(file);
-        printf("%s\n", rindex(filename, '.'));
 
         //Check for extension
         if(has_ext(filename, "cpp"))
@@ -201,12 +91,6 @@ void print_version(void)
     exit(0);
 }
 
-void info(const char *str)
-{
-    if(!quiet)
-        printf("[INFO] %s...\n", str);
-}
-
 static char *clang_options = NULL;
 
 int parse_arguments(int argc, char **argv)
@@ -238,6 +122,13 @@ int parse_arguments(int argc, char **argv)
     return optind;
 }
 
+//Print running information
+void info(const char *str)
+{
+    if(!quiet)
+        printf("[INFO] %s...\n", str);
+}
+
 int main(int argc, char **argv)
 {
     int arg_loc = parse_arguments(argc, argv);
@@ -250,7 +141,6 @@ int main(int argc, char **argv)
     unsigned units = 0;
     for(int i=arg_loc; i<argc; ++i) {
         if(file_exists(argv[i])) {
-            printf("Adding %s...\n", argv[i]);
             tus[units++] = new TranslationUnit(argv[i]);
         } else
             warn("Skipping invalid file %s...\n", argv[i]);
@@ -262,7 +152,7 @@ int main(int argc, char **argv)
     }
 
     info("Collecting Information from TranslationUnit");
-    for(int i=0; i<units; ++i)
+    for(unsigned i=0; i<units; ++i)
         tus[i]->collect(&gb, clang_options);
 
     if(whitelist_file) {
@@ -271,7 +161,7 @@ int main(int argc, char **argv)
     }
 
     info("Performing Deductions");
-    dlist_find_all(&gb);
+    Deductions ded(&gb);
 
     info("Printing Generated Information");
 
@@ -282,11 +172,13 @@ int main(int argc, char **argv)
         info("Call Graph");
         gb.getCalls().print();
         info("Deductions");
-        dlist_print();
+        ded.print();
         puts("");
         info("Found Results");
     }
-    int result = find_inconsistent(&gb);
+
+    //Get the actual errors from contradictions/ambiguities
+    int result = ded.find_inconsistent(&gb);
 
     //Cleanup
     for(int i=0; i<argc-1; ++i)

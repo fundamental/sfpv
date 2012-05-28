@@ -21,8 +21,8 @@ add_definitions (-fno-rtti)
 set (CMAKE_CXX_COMPILER clang++)
 
 add_definitions (-DVERSION="${sfpv_VERSION_MAJOR}.${sfpv_VERSION_MINOR}")
-add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp
-    src/TranslationUnit.cpp src/Types.cpp src/main.cpp)
+add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp src/Deductions.cpp
+    src/TranslationUnit.cpp src/FuncCalls.cpp src/FuncEntries.cpp src/main.cpp)
 target_link_libraries (sfpv  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
 
 ######################################################################
