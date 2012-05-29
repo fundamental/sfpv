@@ -3,4 +3,5 @@ sin sinl sinf
 abs fabs fabsf fabsl
 exp expf expl
 pow powf powl
-
+fmod fmodf fmodl
+jack_port_get_buffer
