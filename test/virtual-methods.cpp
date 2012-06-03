@@ -28,6 +28,7 @@ class D : public virtual C
 
 int RT main()
 {
-    A *a = new D;
+    D d;
+    A *a = &D;
     a->method();
 }

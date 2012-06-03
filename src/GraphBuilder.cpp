@@ -24,6 +24,7 @@ class GraphStmtHelper :public clang::StmtVisitor<GraphStmtHelper>
     }
 
     void VisitCallExpr(clang::CallExpr *ce);
+    void VisitCXXNewExpr(clang::CXXNewExpr *ne);
 
     void VisitChildren(clang::Stmt *S)
     {
@@ -71,6 +72,22 @@ class GraphBuilderImpl
         FuncCalls fc;
         class TranslationUnit *current_tu;
 };
+
+void GraphStmtHelper::VisitCXXNewExpr(clang::CXXNewExpr *ne)
+{
+    clang::FunctionDecl *fdecl = ne->getOperatorNew();
+
+    //Alright, if you don't want to give me a fdecl you wont be parsed
+    if(!fdecl) //TODO check why this case is possible
+        return;
+
+    std::string callee = fdecl->getQualifiedNameAsString();
+    gbi->fc.add(caller, callee, gbi->current_tu, ne);
+
+    //add operator new to the list of known functions
+    if(!gbi->fe.has(callee))
+        gbi->fe.add(callee, gbi->current_tu, fdecl);
+}
 
 void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
 {

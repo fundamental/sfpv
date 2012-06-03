@@ -18,7 +18,7 @@ FuncCalls::~FuncCalls(void)
     delete impl;
 }
 
-void FuncCalls::add(std::string f1, std::string f2, class TranslationUnit *tu, class clang::CallExpr *ce)
+void FuncCalls::add(std::string f1, std::string f2, class TranslationUnit *tu, class clang::Expr *ce)
 {
     impl->cpair.insert(CallPair(f1,f2,tu,ce));
 }

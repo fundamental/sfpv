@@ -56,8 +56,8 @@ void DeductionsImpl::print_path(std::string func, GraphBuilder *gb)
         if(d.second == func) {
             clang::DiagnosticsEngine *diag = d.TU->getDiagEng();
             if(d.CE) {
-                std::string str = d.CE->getDirectCallee()->getQualifiedNameAsString();
-                diag->Report(d.CE->getLocStart(), error_realtime_saftey_trace) << str;
+                diag->Report(d.CE->getLocStart(), error_realtime_saftey_trace)
+                    << d.first;
             } else
                 diag->Report(error_realtime_safety_class) << d.second << d.first;
 

@@ -4,7 +4,7 @@
 
 namespace clang
 {
-    class CallExpr;
+    class Expr;
 }
 
 class CallPair : public std::pair<std::string,std::string>
@@ -14,11 +14,11 @@ class CallPair : public std::pair<std::string,std::string>
             :std::pair<std::string,std::string>("",""),TU(NULL), CE(NULL)
         {}
 
-        CallPair(std::string a, std::string b, class TranslationUnit *tu, class clang::CallExpr *ce)
+        CallPair(std::string a, std::string b, class TranslationUnit *tu, class clang::Expr *ce)
             :std::pair<std::string,std::string>(a,b),TU(tu), CE(ce)
         {}
         class TranslationUnit *TU;
-        class clang::CallExpr *CE;
+        class clang::Expr *CE;
 };
 
 class FuncCalls
@@ -28,7 +28,7 @@ class FuncCalls
         ~FuncCalls(void);
 
         void print(void) const;
-        void add(std::string f1, std::string f2, class TranslationUnit *tu, class clang::CallExpr *ce);
+        void add(std::string f1, std::string f2, class TranslationUnit *tu, class clang::Expr *ce);
         typedef std::set<CallPair>::iterator sitr;
         sitr begin(void);
         sitr end(void);
