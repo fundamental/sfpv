@@ -22,8 +22,12 @@ set (CMAKE_CXX_COMPILER clang++)
 
 add_definitions (-DVERSION="${sfpv_VERSION_MAJOR}.${sfpv_VERSION_MINOR}")
 add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp src/Deductions.cpp
-    src/TranslationUnit.cpp src/FuncCalls.cpp src/FuncEntries.cpp src/main.cpp)
+    src/TranslationUnit.cpp src/FuncCalls.cpp src/FuncEntries.cpp src/sfpv.cpp)
 target_link_libraries (sfpv  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
+
+add_executable (sfpf src/Errors.cpp src/GraphBuilder.cpp src/ReverseDeductions.cpp
+    src/TranslationUnit.cpp src/FuncCalls.cpp src/FuncEntries.cpp src/sfpf.cpp)
+target_link_libraries (sfpf  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
 
 ######################################################################
 #               Tests to verify it works                             #
@@ -38,7 +42,7 @@ set_property (TEST test-one
     "error: Realtime safety violation, baz called from a safe function.*Function undefined_function was deduced to need to be safe")
 
 #Verify that nothing dies with very complex headers
-add_test (header-includes sfpv -C "-D__STDC_CONSTANT_MACROS=1 -D__STDC_FORMAT_MACROS=1 __STDC_LIMIT_MACROS=1" ${SRC}/src/main.cpp)
+add_test (header-includes sfpv -C "-D__STDC_CONSTANT_MACROS=1 -D__STDC_FORMAT_MACROS=1 __STDC_LIMIT_MACROS=1" ${SRC}/src/sfpv.cpp)
 
 #Check that information is translated over multiple translation units
 add_test (multi-translation-unit sfpv ${SRC}/test/test-input.cpp ${SRC}/test/test-input2.cpp)

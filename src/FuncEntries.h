@@ -13,18 +13,18 @@ class FuncEntry
     public:
         FuncEntry(void)
             :name("I_HAVE_A_BUG...@" __FILE__)
-        {
-        }
+        {}
         FuncEntry(std::string str, class TranslationUnit *tu, class clang::FunctionDecl *fdecl)
-            :name(str),TU(tu),FDECL(fdecl),RT(false),ext_RT(false),nRT(false), defined(false)
+            :name(str),TU(tu),FDECL(fdecl),RT(false),ext_RT(false),nRT(false), ext_nRT(false), defined(false)
         {}
 
         void display(void) const;
         void realtime(void) { RT = true; }
         void ext_realtime(void) {ext_RT = true;}
+        void ext_not_realtime(void) {ext_nRT = true;}
         void not_realtime(void) { nRT = true; }
         bool realtime_p(void) {return RT|ext_RT;}
-        bool not_realtime_p(void) {return nRT;}
+        bool not_realtime_p(void) {return nRT|ext_nRT;}
         void define(void) {defined = true;}
         bool defined_p(void) {return defined;}
 
@@ -35,6 +35,7 @@ class FuncEntry
         bool RT;
         bool ext_RT;
         bool nRT;
+        bool ext_nRT;
         bool defined;
 };
 

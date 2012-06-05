@@ -1,7 +1,7 @@
 #include "TranslationUnit.h"
 #include "FuncCalls.h"
 #include "FuncEntries.h"
-#include "Deductions.h"
+#include "ReverseDeductions.h"
 #include "GraphBuilder.h"
 #include "Errors.h"
 
@@ -25,10 +25,12 @@ void add_manual_annotations(const char *fname, FuncEntries &e)
     while(in) {
         std::string word;
         in >> word;
-        if(e.has(word))
+        if(e.has(word)) {
             e[word].ext_realtime();
+        }
     }
     in.close();
+
 }
 
 //Verify the extention of a file
@@ -138,6 +140,7 @@ int main(int argc, char **argv)
 
     info("Setting up CompilerInstance for TranslationUnit");
     TranslationUnit **tus = new TranslationUnit*[argc-1];
+    memset(tus, 0, sizeof(TranslationUnit*)*(argc-1));
     unsigned units = 0;
     for(int i=arg_loc; i<argc; ++i) {
         if(file_exists(argv[i])) {
@@ -159,11 +162,33 @@ int main(int argc, char **argv)
         info("Adding User Specified Annotations");
         add_manual_annotations(whitelist_file, gb.getFunctions());
     }
+    {
+        FuncEntries &fe = gb.getFunctions();
+        fe.add("__builtin_va_start",NULL,NULL);
+        fe.add("__builtin_va_end",NULL,NULL);
+        fe["__builtin_va_start"].ext_realtime();
+        fe["__builtin_va_end"].ext_realtime();
+        fe["__builtin_va_start"].define();
+        fe["__builtin_va_end"].define();
+        if(fe.has("malloc"))
+            fe["malloc"].ext_not_realtime();
+        if(fe.has("free"))
+            fe["free"].ext_not_realtime();
+        if(fe.has("calloc"))
+            fe["calloc"].ext_not_realtime();
+        if(fe.has("operator new"))
+            fe["operator new"].ext_not_realtime();
+        if(fe.has("operator delete"))
+            fe["operator delete"].ext_not_realtime();
+    }
 
+    //Note that the reverse deduction system will produce nonsense with an
+    //inconsistent set of annotations
     info("Performing Deductions");
-    Deductions ded(&gb);
+    ReverseDeductions rded(&gb);
 
     info("Printing Generated Information");
+
 
     //Show overall state
     if(!quiet) {
@@ -172,18 +197,19 @@ int main(int argc, char **argv)
         info("Call Graph");
         gb.getCalls().print();
         info("Deductions");
-        ded.print();
+        rded.print();
         puts("");
         info("Found Results");
     }
 
+    rded.print_whitelist();
     //Get the actual errors from contradictions/ambiguities
-    int result = ded.find_inconsistent(&gb);
+    //int result = ded.find_inconsistent(&gb);
 
     //Cleanup
     for(int i=0; i<argc-1; ++i)
         delete tus[i];
     delete[] tus;
 
-    return result;
+    return 0;
 }
