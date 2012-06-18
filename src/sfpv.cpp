@@ -15,11 +15,10 @@
 //C++11 extentions are useful, but setting the standard to be C++11 breaks
 //compilation, so lets just sweep these errors under a rug for now
 #pragma clang diagnostic ignored "-Wc++11-extensions"
-#define CHECK(x) do{if(!x) errx(1, "expected '%s'", #x);}while(0)
 
 
 //Perform manual annotations to the function entries
-void add_manual_annotations(const char *fname, FuncEntries &e)
+void add_manual_whitelist(const char *fname, FuncEntries &e)
 {
     std::ifstream in(fname);
     while(in) {
@@ -27,6 +26,23 @@ void add_manual_annotations(const char *fname, FuncEntries &e)
         in >> word;
         if(e.has(word))
             e[word].ext_realtime();
+    }
+    in.close();
+}
+
+void add_manual_blacklist(const char *fname, FuncEntries &e)
+{
+    std::string reason = "Unknown";
+    std::ifstream in(fname);
+    while(in) {
+        std::string word;
+        in >> word;
+        printf("'%s'(%d)\n", word.c_str(),word.length());
+
+        if(word[word.length()-1] == ':')
+            reason = word.substr(0, word.length()-1);
+        else if(e.has(word))
+            e[word].ext_not_realtime(reason);
     }
     in.close();
 }
@@ -70,10 +86,12 @@ bool file_exists(const char *filename)
 "    -v\t\t  Version\n"\
 "    -h\t\t  help; prints this message\n"\
 "    -W whitelist  uses the whitelist file to provide external annotations\n"\
+"    -B blacklist  uses the blacklist file to provide external annotations\n"\
 "    -C option     pass options directly to clang\n"
 
 
 const char *whitelist_file = NULL;
+const char *blacklist_file = NULL;
 void print_usage(void)
 {
     fprintf(stderr, USAGE);
@@ -98,11 +116,14 @@ int parse_arguments(int argc, char **argv)
     if(argc == 1)
         print_usage();
     int opt;
-    while((opt = getopt(argc, argv, "QC:W:vh")) != -1) {
+    while((opt = getopt(argc, argv, "QC:W:B:vh")) != -1) {
         switch(opt)
         {
             case 'W':
                 whitelist_file = optarg;
+                break;
+            case 'B':
+                blacklist_file = optarg;
                 break;
             case 'C':
                 clang_options = strdup(optarg);
@@ -157,8 +178,13 @@ int main(int argc, char **argv)
         tus[i]->collect(&gb, clang_options);
 
     if(whitelist_file) {
-        info("Adding User Specified Annotations");
-        add_manual_annotations(whitelist_file, gb.getFunctions());
+        info("Adding User Specified Whitelist");
+        add_manual_whitelist(whitelist_file, gb.getFunctions());
+    }
+
+    if(blacklist_file) {
+        info("Adding User Specified Blacklist");
+        add_manual_blacklist(blacklist_file, gb.getFunctions());
     }
 
     info("Performing Deductions");

@@ -9,7 +9,7 @@ void errors_init(clang::DiagnosticsEngine &e)
 {
     error_realtime_saftey_violation =
         e.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                "Realtime safety violation, %0 called from a safe function");
+                "Realtime safety violation, %0 called from a safe function, but it %1");
 
     error_realtime_saftey_trace =
         e.getCustomDiagID(clang::DiagnosticsEngine::Note,

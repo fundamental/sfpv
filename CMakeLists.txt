@@ -59,3 +59,7 @@ add_test (virtual-calls sfpv  ${SRC}/test/virtual-methods.cpp)
 add_test (op-new sfpv ${SRC}/test/cpp-new-detection.cpp)
 set_property (TEST op-new PROPERTY PASS_REGULAR_EXPRESSION
     "operator new.*operator delete")
+
+add_test (malloc-blacklist sfpv "-B" ${SRC}/data/blacklist.txt ${SRC}/test/malloc-blacklist.c)
+set_property (TEST malloc-blacklist PROPERTY PASS_REGULAR_EXPRESSION
+    "error: Realtime safety violation, malloc called from a safe function, but it is an function interacting with Memory")

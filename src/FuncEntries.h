@@ -21,14 +21,15 @@ class FuncEntry
         void display(void) const;
         void realtime(void) { RT = true; }
         void ext_realtime(void) {ext_RT = true;}
-        void ext_not_realtime(void) {ext_nRT = true;}
-        void not_realtime(void) { nRT = true; }
+        void ext_not_realtime(std::string _reason) {ext_nRT = true; reason = "is an function interacting with " + _reason;}
+        void not_realtime(void) { nRT = true; reason = "was annotated non-realtime"; }
         bool realtime_p(void) {return RT|ext_RT;}
         bool not_realtime_p(void) {return nRT|ext_nRT;}
         void define(void) {defined = true;}
         bool defined_p(void) {return defined;}
 
         std::string name;
+        std::string reason;
         class TranslationUnit *TU;
         class clang::FunctionDecl *FDECL;
     private:

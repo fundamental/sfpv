@@ -129,12 +129,12 @@ int DeductionsImpl::find_inconsistent(GraphBuilder *gb)
         if(e.not_realtime_p() && rt(e.name)) {
             clang::DiagnosticsEngine *diag =  e.TU->getDiagEng();
             diag->Report(e.FDECL->getLocation(), error_realtime_saftey_violation)
-                << e.FDECL->getQualifiedNameAsString();
+                << e.FDECL->getQualifiedNameAsString() << e.reason;
 
             print_path(e.name, gb);
             result |= 2;
         }
-        if(!e.defined_p() && !e.realtime_p() && rt(e.name)) {
+        else if(!e.defined_p() && !e.realtime_p() && rt(e.name)) {
             //Check for function calls [virtual methods]
             for(auto call : gb->getCalls())
                 if(call.first==e.name)

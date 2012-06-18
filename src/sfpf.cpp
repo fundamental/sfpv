@@ -171,15 +171,15 @@ int main(int argc, char **argv)
         fe["__builtin_va_start"].define();
         fe["__builtin_va_end"].define();
         if(fe.has("malloc"))
-            fe["malloc"].ext_not_realtime();
+            fe["malloc"].ext_not_realtime("Memory");
         if(fe.has("free"))
-            fe["free"].ext_not_realtime();
+            fe["free"].ext_not_realtime("Memory");
         if(fe.has("calloc"))
-            fe["calloc"].ext_not_realtime();
+            fe["calloc"].ext_not_realtime("Memory");
         if(fe.has("operator new"))
-            fe["operator new"].ext_not_realtime();
+            fe["operator new"].ext_not_realtime("Memory");
         if(fe.has("operator delete"))
-            fe["operator delete"].ext_not_realtime();
+            fe["operator delete"].ext_not_realtime("Memory");
     }
 
     //Note that the reverse deduction system will produce nonsense with an

@@ -99,6 +99,5 @@ some of the known missing features are:
 - Handling C++ headers with .h extension
 - Better base whitelist file
 - Allowing multiple whitelist files
-- Blacklist file (perhaps with reasons why the functions are blacklisted)
 - Better command line argument handling (eg --help or long arguments in general)
 - Integration with clang's scan-build tool

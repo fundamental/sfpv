@@ -1,0 +1,2 @@
+IO: printf fprintf vprintf fwrite
+Memory: free calloc malloc realloc @new @delete
