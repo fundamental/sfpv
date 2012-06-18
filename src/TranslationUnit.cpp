@@ -47,66 +47,6 @@ const char *SaveStringInSet(std::set<std::string> &SavedStrings, llvm::StringRef
       return SavedStrings.insert(S).first->c_str();
 }
 
-//Magic from include-what-you-use
-//This should be reworked before any official release
-void ExpandArgsFromBuf(const char *Arg,
-                       clang::SmallVectorImpl<const char*> &ArgVector,
-                       std::set<std::string> &SavedStrings) {
-  const char *FName = Arg + 1;
-  llvm::OwningPtr<llvm::MemoryBuffer> MemBuf;
-  if (llvm::MemoryBuffer::getFile(FName, MemBuf)) {
-    ArgVector.push_back(SaveStringInSet(SavedStrings, Arg));
-    return;
-  }
-
-  const char *Buf = MemBuf->getBufferStart();
-  char InQuote = ' ';
-  std::string CurArg;
-
-  for (const char *P = Buf; ; ++P) {
-    if (*P == '\0' || (isspace(*P) && InQuote == ' ')) {
-      if (!CurArg.empty()) {
-
-        if (CurArg[0] != '@') {
-          ArgVector.push_back(SaveStringInSet(SavedStrings, CurArg));
-        } else {
-          ExpandArgsFromBuf(CurArg.c_str(), ArgVector, SavedStrings);
-        }
-
-        CurArg = "";
-      }
-      if (*P == '\0')
-        break;
-      else
-        continue;
-    }
-
-    if (isspace(*P)) {
-      if (InQuote != ' ')
-        CurArg.push_back(*P);
-      continue;
-    }
-
-    if (*P == '"' || *P == '\'') {
-      if (InQuote == *P)
-        InQuote = ' ';
-      else if (InQuote == ' ')
-        InQuote = *P;
-      else
-        CurArg.push_back(*P);
-      continue;
-    }
-
-    if (*P == '\\') {
-      ++P;
-      if (*P != '\0')
-        CurArg.push_back(*P);
-      continue;
-    }
-    CurArg.push_back(*P);
-  }
-}
-
 void ExpandArgv(int argc, const char **argv,
                 llvm::SmallVectorImpl<const char*> &ArgVector,
                 std::set<std::string> &SavedStrings) {
