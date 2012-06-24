@@ -81,9 +81,9 @@ bool file_exists(const char *filename)
 }
 
 #define USAGE \
-    "Usage: sfpv [-Qvh] [-W whitelist] [-C options] SOURCE-FILES\n\n" \
-"    -Q\t\t  quiet mode, suppresses non warning/error related output\n" \
-"    -v\t\t  Version\n"\
+    "Usage: sfpv [-vVh] [-W whitelist] [-C options] SOURCE-FILES\n\n" \
+"    -v\t\t  verbose\n"\
+"    -V\t\t  version\n"\
 "    -h\t\t  help; prints this message\n"\
 "    -W whitelist  uses the whitelist file to provide external annotations\n"\
 "    -B blacklist  uses the blacklist file to provide external annotations\n"\
@@ -101,7 +101,7 @@ void print_usage(void)
 //This program defaults to being very noisy and it will produce pages of output
 //as it lists its internal state
 //This option produces a more sane level of output
-bool quiet = false;
+bool verbose = false;
 
 void print_version(void)
 {
@@ -116,7 +116,7 @@ int parse_arguments(int argc, char **argv)
     if(argc == 1)
         print_usage();
     int opt;
-    while((opt = getopt(argc, argv, "QC:W:B:vh")) != -1) {
+    while((opt = getopt(argc, argv, "QC:W:B:vVh")) != -1) {
         switch(opt)
         {
             case 'W':
@@ -128,10 +128,10 @@ int parse_arguments(int argc, char **argv)
             case 'C':
                 clang_options = strdup(optarg);
                 break;
-            case 'Q':
-                quiet = true;
-                break;
             case 'v':
+                verbose = true;
+                break;
+            case 'V':
                 print_version();
                 break;
             case 'h':
@@ -146,7 +146,7 @@ int parse_arguments(int argc, char **argv)
 //Print running information
 void info(const char *str)
 {
-    if(!quiet)
+    if(verbose)
         printf("[INFO] %s...\n", str);
 }
 
@@ -193,7 +193,7 @@ int main(int argc, char **argv)
     info("Printing Generated Information");
 
     //Show overall state
-    if(!quiet) {
+    if(verbose) {
         info("Function Table");
         gb.getFunctions().print();
         info("Call Graph");

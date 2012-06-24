@@ -17,11 +17,10 @@ software, though it should eventually grow to be much more general than this.
 Program Options
 ---------------
 
-*-Q*::
-    Quiet mode; This option suppresses much of the provided diagnostic
-    information. This option will likely be replaced with a verbose option in
-    the future.
 *-v*::
+    Verbose mode; This option provides a large amount of diagnostic
+    information.
+*-V*::
     Prints the version of the program and exits
 *-h*::
     Prints the help text and exits

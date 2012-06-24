@@ -56,7 +56,7 @@ add_test (manual-whitelist sfpv "-W" ${SRC}/data/whitelist.txt ${SRC}/test/math-
 add_test (virtual-calls sfpv  ${SRC}/test/virtual-methods.cpp)
 
 #Verify that 'operator new' was found
-add_test (op-new sfpv ${SRC}/test/cpp-new-detection.cpp)
+add_test (op-new sfpv -v ${SRC}/test/cpp-new-detection.cpp)
 set_property (TEST op-new PROPERTY PASS_REGULAR_EXPRESSION
     "operator new.*operator delete")
 
