@@ -1,6 +1,6 @@
 #include "TranslationUnit.h"
-#include "FuncCalls.h"
-#include "FuncEntries.h"
+#include "Calls.h"
+#include "Callees.h"
 #include "Deductions.h"
 #include "GraphBuilder.h"
 #include "Errors.h"
@@ -18,19 +18,19 @@
 
 
 //Perform manual annotations to the function entries
-void add_manual_whitelist(const char *fname, FuncEntries &e)
+void add_manual_whitelist(const char *fname, Callees &e)
 {
     std::ifstream in(fname);
     while(in) {
         std::string word;
         in >> word;
         if(e.has(word))
-            e[word].ext_realtime();
+            e[word]->ext_realtime();
     }
     in.close();
 }
 
-void add_manual_blacklist(const char *fname, FuncEntries &e)
+void add_manual_blacklist(const char *fname, Callees &e)
 {
     std::string reason = "Unknown";
     std::ifstream in(fname);
@@ -42,7 +42,7 @@ void add_manual_blacklist(const char *fname, FuncEntries &e)
         if(word[word.length()-1] == ':')
             reason = word.substr(0, word.length()-1);
         else if(e.has(word))
-            e[word].ext_not_realtime(reason);
+            e[word]->ext_not_realtime(reason);
     }
     in.close();
 }

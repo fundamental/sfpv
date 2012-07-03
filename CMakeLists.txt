@@ -22,12 +22,12 @@ set (CMAKE_CXX_COMPILER clang++)
 
 add_definitions (-DVERSION="${sfpv_VERSION_MAJOR}.${sfpv_VERSION_MINOR}")
 add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp src/Deductions.cpp
-    src/TranslationUnit.cpp src/FuncCalls.cpp src/FuncEntries.cpp src/sfpv.cpp)
+    src/TranslationUnit.cpp src/Calls.cpp src/Callees.cpp src/sfpv.cpp)
 target_link_libraries (sfpv  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
 
-add_executable (sfpf src/Errors.cpp src/GraphBuilder.cpp src/ReverseDeductions.cpp
-    src/TranslationUnit.cpp src/FuncCalls.cpp src/FuncEntries.cpp src/sfpf.cpp)
-target_link_libraries (sfpf  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
+#add_executable (sfpf src/Errors.cpp src/GraphBuilder.cpp src/ReverseDeductions.cpp
+#    src/TranslationUnit.cpp src/Calls.cpp src/FuncEntries.cpp src/sfpf.cpp)
+#target_link_libraries (sfpf  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
 
 ######################################################################
 #               Tests to verify it works                             #
@@ -39,7 +39,7 @@ enable_testing ()
 add_test (test-one sfpv ${SRC}/test/test-input.c)
 set_property (TEST test-one
     PROPERTY PASS_REGULAR_EXPRESSION
-    "error: Realtime safety violation, baz called from a safe function.*Function undefined_function was deduced to need to be safe")
+    "Function undefined_function was deduced to need to be safe.*error: Realtime safety violation, baz called from a safe function")
 
 #Verify that nothing dies with very complex headers
 add_test (header-includes sfpv -C "-D__STDC_CONSTANT_MACROS=1 -D__STDC_FORMAT_MACROS=1 __STDC_LIMIT_MACROS=1" ${SRC}/src/sfpv.cpp)
@@ -63,3 +63,7 @@ set_property (TEST op-new PROPERTY PASS_REGULAR_EXPRESSION
 add_test (malloc-blacklist sfpv "-B" ${SRC}/data/blacklist.txt ${SRC}/test/malloc-blacklist.c)
 set_property (TEST malloc-blacklist PROPERTY PASS_REGULAR_EXPRESSION
     "error: Realtime safety violation, malloc called from a safe function, but it is an function interacting with Memory")
+
+add_test (func-ptr sfpv ${SRC}/test/function-pointer.c)
+set_property (TEST func-ptr PROPERTY PASS_REGULAR_EXPRESSION
+    "error:")

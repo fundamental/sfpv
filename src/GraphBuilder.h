@@ -9,8 +9,8 @@ class GraphBuilder
         GraphBuilder(void);
         ~GraphBuilder(void);
         class clang::ASTConsumer *getConsumer(class TranslationUnit *tu);
-        class FuncEntries &getFunctions(void) const;
-        class FuncCalls &getCalls(void) const;
+        class Callees &getFunctions(void) const;
+        class Calls &getCalls(void) const;
 
     private:
         class GraphBuilderImpl *impl;

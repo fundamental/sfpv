@@ -1,6 +1,6 @@
 #include "GraphBuilder.h"
-#include "FuncEntries.h"
-#include "FuncCalls.h"
+#include "Callees.h"
+#include "Calls.h"
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/StmtVisitor.h>
 #include <clang/AST/RecursiveASTVisitor.h>
@@ -13,16 +13,24 @@ class GraphStmtHelper :public clang::StmtVisitor<GraphStmtHelper>
     GraphBuilderImpl *gbi;
     std::string caller;
 
+    //Container for function local function pointers
+    std::set<Callee*> local_ptr;
+
     public:
     GraphStmtHelper(GraphBuilderImpl *_gbi, std::string _caller)
         :gbi(_gbi), caller(_caller)
     {}
 
+    ~GraphStmtHelper(void);
+
     void VisitStmt(clang::Stmt *s)
     {
+        //s->dump();
         VisitChildren(s);
     }
 
+    void VisitBinAssign(clang::BinaryOperator *eq);
+    void VisitDeclStmt(clang::DeclStmt *ds);
     void VisitCallExpr(clang::CallExpr *ce);
     void VisitCXXNewExpr(clang::CXXNewExpr *ne);
     void VisitCXXDeleteExpr(clang::CXXDeleteExpr *de);
@@ -69,10 +77,16 @@ class GraphBuilderImpl
         void annotation_check(std::string fname, clang::Decl *decl);
 
         TopDeclConsumer consume;
-        FuncEntries fe;
-        FuncCalls fc;
+        Callees callees;
+        Calls calls;
         class TranslationUnit *current_tu;
 };
+
+GraphStmtHelper::~GraphStmtHelper(void)
+{
+    for(Callee *c:local_ptr)
+        gbi->callees.add(static_cast<FuncPtrCallee*>(c));
+}
 
 void GraphStmtHelper::VisitCXXNewExpr(clang::CXXNewExpr *ne)
 {
@@ -83,11 +97,12 @@ void GraphStmtHelper::VisitCXXNewExpr(clang::CXXNewExpr *ne)
         return;
 
     std::string callee = fdecl->getQualifiedNameAsString();
-    gbi->fc.add(caller, callee, gbi->current_tu, ne);
 
     //add operator new to the list of known functions
-    if(!gbi->fe.has(callee))
-        gbi->fe.add(callee, gbi->current_tu, fdecl);
+    if(!gbi->callees.has(callee))
+        gbi->callees.add(callee, gbi->current_tu, fdecl);
+
+    gbi->calls.add(gbi->callees[caller], gbi->callees[callee], gbi->current_tu, ne);
 }
 
 void GraphStmtHelper::VisitCXXDeleteExpr(clang::CXXDeleteExpr *de)
@@ -99,11 +114,95 @@ void GraphStmtHelper::VisitCXXDeleteExpr(clang::CXXDeleteExpr *de)
         return;
 
     std::string callee = fdecl->getQualifiedNameAsString();
-    gbi->fc.add(caller, callee, gbi->current_tu, de);
 
     //add operator new to the list of known functions
-    if(!gbi->fe.has(callee))
-        gbi->fe.add(callee, gbi->current_tu, fdecl);
+    if(!gbi->callees.has(callee))
+        gbi->callees.add(callee, gbi->current_tu, fdecl);
+
+    gbi->calls.add(gbi->callees[caller], gbi->callees[callee], gbi->current_tu, de);
+}
+
+void GraphStmtHelper::VisitBinAssign(clang::BinaryOperator *eq)
+{
+    using clang::dyn_cast;
+    using clang::DeclRefExpr;
+    //Assume basic function pointer assignment
+    //eq->getRHS()->dump();
+    //eq->getLHS()->dump();
+    if(dyn_cast<clang::CastExpr>(eq->getRHS()) &&
+            dyn_cast<DeclRefExpr>(eq->getLHS()))
+    {
+        clang::DeclRefExpr *lhs = dyn_cast<DeclRefExpr>(eq->getLHS()),
+                           *rhs = dyn_cast<DeclRefExpr>(
+                                   dyn_cast<clang::CastExpr>(
+                                       eq->getRHS())->getSubExpr());
+        if(lhs && rhs) {
+            //Get LHS node
+            Callee *caller = NULL;
+            for(Callee *c : local_ptr) {
+                if(c->name == lhs->getDecl()->getNameAsString()) {
+                    caller = c;
+                    break;
+                }
+            }
+
+            if(!caller) {
+                warnx("Could not find local function pointer for assignment...");
+                return;
+            }
+
+            if(gbi->callees.has(rhs->getDecl()->getNameAsString()))
+                gbi->calls.add(caller, gbi->callees[rhs->getDecl()->getNameAsString()], gbi->current_tu, eq);
+            else {
+                //Find the local
+                Callee *callee = NULL;
+                for(Callee *c : local_ptr) {
+                    if(c->name == rhs->getDecl()->getNameAsString()) {
+                        callee = c;
+                        break;
+                    }
+                }
+
+                if(!callee) {
+                    warnx("Could not find local function pointer for assignment...");
+                    return;
+                }
+                gbi->calls.add(caller, callee, gbi->current_tu, eq);
+            }
+
+
+        }
+    }
+}
+
+
+void GraphStmtHelper::VisitDeclStmt(clang::DeclStmt *ds)
+{
+    using clang::dyn_cast;
+    //ds->dump();
+    for(auto itr = ds->decl_begin(); itr != ds->decl_end(); ++itr) {
+        if(dyn_cast<clang::VarDecl>(*itr)) {
+            clang::VarDecl *vdecl = dyn_cast<clang::VarDecl>(*itr);
+            //vdecl->dumpXML();
+            if(vdecl->getType()->isFunctionPointerType()) {
+                FuncPtrCallee *callee =
+                    new FuncPtrCallee(vdecl->getNameAsString(), gbi->current_tu, (*itr));
+                local_ptr.insert(callee);
+
+                //Add initial state if one is present
+                if(vdecl->getInit())
+                {
+                    if(dyn_cast<clang::CastExpr>(vdecl->getInit())) {
+                        clang::DeclRefExpr *expr =
+                            dyn_cast<clang::DeclRefExpr>(dyn_cast<clang::CastExpr>(vdecl->getInit())->getSubExpr());
+                        if(expr)
+                            std::string tmp = expr->getDecl()->getNameAsString();
+                    }
+                }
+            }
+        }
+    }
+    clang::StmtVisitor<GraphStmtHelper>::VisitDeclStmt(ds);
 }
 
 void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
@@ -113,7 +212,7 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
     clang::FunctionDecl *fdecl = ce->getDirectCallee();
     if(fdecl) {
         std::string callee = ce->getDirectCallee()->getQualifiedNameAsString();
-        gbi->fc.add(caller,callee,gbi->current_tu,ce);
+        gbi->calls.add(gbi->callees[caller],gbi->callees[callee],gbi->current_tu,ce);
     }
     else if(dyn_cast<clang::UnresolvedLookupExpr>(ce->getCallee())) {
         //Template magic [found in cmath type lookup]
@@ -129,6 +228,28 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
     }
     else if(dyn_cast<clang::CastExpr>(ce->getCallee())) {
         //Unwanted cast expressions
+        //ce->dump();
+        if(dyn_cast<clang::CastExpr>(ce->getCallee())) {
+            clang::DeclRefExpr *expr =
+                dyn_cast<clang::DeclRefExpr>(dyn_cast<clang::CastExpr>(ce->getCallee())->getSubExpr());
+            if(expr) {
+                std::string tmp = expr->getDecl()->getNameAsString();
+
+                //Find the local
+                Callee *callee = NULL;
+                for(Callee *c : local_ptr) {
+                    if(c->name == tmp) {
+                        callee = c;
+                        break;
+                    }
+                }
+
+                if(callee)
+                    gbi->calls.add(gbi->callees[caller],callee,gbi->current_tu,ce);
+                else
+                    warnx("could not find callee %s\n", tmp.c_str());
+            }
+        }
     }
     else if(dyn_cast<clang::CXXPseudoDestructorExpr>(ce->getCallee())) {
         //TODO Destructors should be checked properly
@@ -157,6 +278,7 @@ bool TopDeclConsumer::HandleTopLevelDecl(clang::DeclGroupRef d) {
     typedef clang::DeclGroupRef::iterator iter;
     for (iter b = d.begin(), e = d.end(); b != e; ++b) {
         GraphAstHelper GAH(gbi);
+        //(*b)->dumpXML();
         GAH.TraverseDecl(*b);
     }
 
@@ -179,14 +301,14 @@ clang::ASTConsumer *GraphBuilder::getConsumer(class TranslationUnit *tu)
     return &impl->consume;
 }
 
-FuncEntries &GraphBuilder::getFunctions(void) const
+Callees &GraphBuilder::getFunctions(void) const
 {
-    return impl->fe;
+    return impl->callees;
 }
 
-FuncCalls &GraphBuilder::getCalls(void) const
+Calls &GraphBuilder::getCalls(void) const
 {
-    return impl->fc;
+    return impl->calls;
 }
 
 void GraphBuilderImpl::annotation_check(std::string fname, clang::Decl *decl)
@@ -201,9 +323,9 @@ void GraphBuilderImpl::annotation_check(std::string fname, clang::Decl *decl)
             AnnotateAttr *annote = dyn_cast<AnnotateAttr>(attr);
             const std::string a_string = annote->getAnnotation().str();
             if(a_string=="realtime")
-                fe[fname].realtime();
+                callees[fname]->realtime();
             if(a_string=="!realtime")
-                fe[fname].not_realtime();
+                callees[fname]->not_realtime();
         }
     }
 }
@@ -217,19 +339,20 @@ bool GraphAstHelper::VisitFunctionDecl(clang::FunctionDecl *fdecl)
         for(auto itr = method->begin_overridden_methods();
                 itr != method->end_overridden_methods(); ++itr)
         {
+            Callee *super = gbi->callees[(*itr)->getQualifiedNameAsString()];
+            Callee *sub   = gbi->callees[method->getQualifiedNameAsString()];
             //FIXME
             //This only covers the basic cases of virtual methods and it may
             //give incorrect behavior for nonvirtual methods, further testing
             //required
-            gbi->fc.add((*itr)->getQualifiedNameAsString(),
-                    method->getQualifiedNameAsString(), gbi->current_tu, NULL);
+            gbi->calls.add(super, sub, gbi->current_tu, NULL);
         }
     }
 
     std::string fname = fdecl->getQualifiedNameAsString();
-    gbi->fe.add(fname, gbi->current_tu, fdecl);
+    gbi->callees.add(fname, gbi->current_tu, fdecl);
     if(fdecl->isThisDeclarationADefinition()) {
-        gbi->fe[fname].define();
+        gbi->callees[fname]->define();
 
         //Find Calls within function
         GraphStmtHelper gsh(gbi, fname);
