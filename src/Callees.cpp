@@ -53,8 +53,8 @@ Callees::~Callees(void)
 void Callees::print(void) const
 {
     printf("%40s\t%s\t%s\t%s\n", "Fn. Name", "RT", "nRT", "defined");
-    for(auto pair : impl->fmap)
-        pair.second->display();
+    for(auto callee : impl->callees)
+        callee->display();
 }
 
 bool Callees::has(std::string fname)

@@ -21,8 +21,6 @@ class GraphStmtHelper :public clang::StmtVisitor<GraphStmtHelper>
         :gbi(_gbi), caller(_caller)
     {}
 
-    ~GraphStmtHelper(void);
-
     void VisitStmt(clang::Stmt *s)
     {
         //s->dump();
@@ -42,6 +40,7 @@ class GraphStmtHelper :public clang::StmtVisitor<GraphStmtHelper>
                 Visit(s);
     }
 
+    void ProcessVarDecl(clang::VarDecl *vdecl);
 };
 
 class GraphAstHelper :public clang::RecursiveASTVisitor<GraphAstHelper>
@@ -74,7 +73,7 @@ class GraphBuilderImpl
             :consume(this)
         {}
 
-        void annotation_check(std::string fname, clang::Decl *decl);
+        void annotation_check(Callee *c, clang::Decl *decl);
 
         TopDeclConsumer consume;
         Callees callees;
@@ -82,11 +81,6 @@ class GraphBuilderImpl
         class TranslationUnit *current_tu;
 };
 
-GraphStmtHelper::~GraphStmtHelper(void)
-{
-    for(Callee *c:local_ptr)
-        gbi->callees.add(static_cast<FuncPtrCallee*>(c));
-}
 
 void GraphStmtHelper::VisitCXXNewExpr(clang::CXXNewExpr *ne)
 {
@@ -179,30 +173,38 @@ void GraphStmtHelper::VisitBinAssign(clang::BinaryOperator *eq)
 void GraphStmtHelper::VisitDeclStmt(clang::DeclStmt *ds)
 {
     using clang::dyn_cast;
-    //ds->dump();
-    for(auto itr = ds->decl_begin(); itr != ds->decl_end(); ++itr) {
-        if(dyn_cast<clang::VarDecl>(*itr)) {
-            clang::VarDecl *vdecl = dyn_cast<clang::VarDecl>(*itr);
-            //vdecl->dumpXML();
-            if(vdecl->getType()->isFunctionPointerType()) {
-                FuncPtrCallee *callee =
-                    new FuncPtrCallee(vdecl->getNameAsString(), gbi->current_tu, (*itr));
-                local_ptr.insert(callee);
 
-                //Add initial state if one is present
-                if(vdecl->getInit())
-                {
-                    if(dyn_cast<clang::CastExpr>(vdecl->getInit())) {
-                        clang::DeclRefExpr *expr =
-                            dyn_cast<clang::DeclRefExpr>(dyn_cast<clang::CastExpr>(vdecl->getInit())->getSubExpr());
-                        if(expr)
-                            std::string tmp = expr->getDecl()->getNameAsString();
-                    }
-                }
+    //Find VarDecls
+    for(auto itr = ds->decl_begin(); itr != ds->decl_end(); ++itr)
+        if(dyn_cast<clang::VarDecl>(*itr))
+            ProcessVarDecl(dyn_cast<clang::VarDecl>(*itr));
+
+    clang::StmtVisitor<GraphStmtHelper>::VisitDeclStmt(ds);
+}
+
+void GraphStmtHelper::ProcessVarDecl(clang::VarDecl *vdecl)
+{
+    using clang::dyn_cast;
+
+    if(vdecl->getType()->isFunctionPointerType()) {
+        FuncPtrCallee *callee =
+            new FuncPtrCallee(vdecl->getNameAsString(), gbi->current_tu, vdecl);
+        local_ptr.insert(callee);
+        gbi->callees.add(callee);
+        gbi->annotation_check(callee, vdecl);
+        warnx("adding function pointer variable %s", vdecl->getNameAsString().c_str());
+
+        //Add initial state if one is present
+        if(vdecl->getInit())
+        {
+            if(dyn_cast<clang::CastExpr>(vdecl->getInit())) {
+                clang::DeclRefExpr *expr =
+                    dyn_cast<clang::DeclRefExpr>(dyn_cast<clang::CastExpr>(vdecl->getInit())->getSubExpr());
+                if(expr)
+                    std::string tmp = expr->getDecl()->getNameAsString();
             }
         }
     }
-    clang::StmtVisitor<GraphStmtHelper>::VisitDeclStmt(ds);
 }
 
 void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
@@ -213,6 +215,44 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
     if(fdecl) {
         std::string callee = ce->getDirectCallee()->getQualifiedNameAsString();
         gbi->calls.add(gbi->callees[caller],gbi->callees[callee],gbi->current_tu,ce);
+
+        for(unsigned i=0; i<fdecl->getNumParams(); ++i)
+            ProcessVarDecl(fdecl->getParamDecl(i));
+
+        clang::Expr **args = ce->getArgs();
+        for(unsigned i=0; i<ce->getNumArgs(); ++i) {
+            clang::Expr *expr = args[i];
+            //XXX this method will only handle the simplist case of providing a
+            //parameter to the function and it will likely be wrong a fair
+            //amount of the time...
+            if(expr && dyn_cast<clang::CastExpr>(expr)) {
+                clang::DeclRefExpr *ref = dyn_cast<clang::DeclRefExpr>(
+                        dyn_cast<clang::CastExpr>(expr)->getSubExpr());
+                if(ref && ref->getDecl() && ref->getDecl()->getType()->isFunctionType()) {
+                    std::string caller_name = ref->getDecl()->getQualifiedNameAsString();
+                    if(gbi->callees.has(caller_name)) {
+                        clang::FunctionDecl *callee_decl = dyn_cast<clang::FunctionDecl>(gbi->callees[callee]->DECL);
+                        if(!callee_decl) {
+                            warnx("Unexpected NULL object...");
+                            continue;
+                        }
+
+                        std::string param_name = callee_decl->getParamDecl(i)->getQualifiedNameAsString();
+                        callee_decl->dump();
+                        Callee *call = NULL;
+
+                        //Find callee (which is assumed to follow function
+                        //pointer convention)
+                        for(Callee *c : gbi->callees)
+                            if(c->getName() == "("+param_name+")")
+                                call = c;
+
+                        if(call)
+                            gbi->calls.add(call, gbi->callees[caller_name], gbi->current_tu, ce);
+                    }
+                }
+            }
+        }
     }
     else if(dyn_cast<clang::UnresolvedLookupExpr>(ce->getCallee())) {
         //Template magic [found in cmath type lookup]
@@ -228,7 +268,6 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
     }
     else if(dyn_cast<clang::CastExpr>(ce->getCallee())) {
         //Unwanted cast expressions
-        //ce->dump();
         if(dyn_cast<clang::CastExpr>(ce->getCallee())) {
             clang::DeclRefExpr *expr =
                 dyn_cast<clang::DeclRefExpr>(dyn_cast<clang::CastExpr>(ce->getCallee())->getSubExpr());
@@ -311,7 +350,7 @@ Calls &GraphBuilder::getCalls(void) const
     return impl->calls;
 }
 
-void GraphBuilderImpl::annotation_check(std::string fname, clang::Decl *decl)
+void GraphBuilderImpl::annotation_check(Callee *c, clang::Decl *decl)
 {
     using clang::dyn_cast;
     using clang::AnnotateAttr;
@@ -323,9 +362,9 @@ void GraphBuilderImpl::annotation_check(std::string fname, clang::Decl *decl)
             AnnotateAttr *annote = dyn_cast<AnnotateAttr>(attr);
             const std::string a_string = annote->getAnnotation().str();
             if(a_string=="realtime")
-                callees[fname]->realtime();
+                c->realtime();
             if(a_string=="!realtime")
-                callees[fname]->not_realtime();
+                c->not_realtime();
         }
     }
 }
@@ -358,7 +397,7 @@ bool GraphAstHelper::VisitFunctionDecl(clang::FunctionDecl *fdecl)
         GraphStmtHelper gsh(gbi, fname);
         gsh.Visit(fdecl->getBody());
     }
-    gbi->annotation_check(fname, fdecl);
+    gbi->annotation_check(gbi->callees[fname], fdecl);
 
     return true;
 }

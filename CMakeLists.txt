@@ -67,3 +67,6 @@ set_property (TEST malloc-blacklist PROPERTY PASS_REGULAR_EXPRESSION
 add_test (func-ptr sfpv ${SRC}/test/function-pointer.c)
 set_property (TEST func-ptr PROPERTY PASS_REGULAR_EXPRESSION
     "error:")
+add_test (func-ptr-parameters sfpv ${SRC}/test/function-pointer-call.cpp)
+set_property (TEST func-ptr-parameters PROPERTY PASS_REGULAR_EXPRESSION
+    "error: Realtime safety violation, malloc_of_doooooooooom called from a safe function, but it was annotated non-realtime")
