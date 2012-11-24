@@ -29,6 +29,6 @@ class D : public virtual C
 int RT main()
 {
     D d;
-    A *a = &D;
+    A *a = &d;
     a->method();
 }
