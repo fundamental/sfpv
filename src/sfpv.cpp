@@ -38,7 +38,6 @@ void add_manual_blacklist(const char *fname, Callees &e)
     while(in) {
         std::string word;
         in >> word;
-        printf("'%s'(%d)\n", word.c_str(),word.length());
 
         if(word[word.length()-1] == ':')
             reason = word.substr(0, word.length()-1);
