@@ -131,6 +131,9 @@ void GraphStmtHelper::VisitBinAssign(clang::BinaryOperator *eq)
                                    dyn_cast<clang::CastExpr>(
                                        eq->getRHS())->getSubExpr());
         if(lhs && rhs) {
+            if(!lhs->getType()->isFunctionPointerType())
+                return;
+
             //Get LHS node
             Callee *caller = NULL;
             for(Callee *c : local_ptr) {
@@ -192,7 +195,6 @@ void GraphStmtHelper::ProcessVarDecl(clang::VarDecl *vdecl)
         local_ptr.insert(callee);
         gbi->callees.add(callee);
         gbi->annotation_check(callee, vdecl);
-        warnx("adding function pointer variable %s", vdecl->getNameAsString().c_str());
 
         //Add initial state if one is present
         if(vdecl->getInit())
@@ -214,6 +216,15 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
     clang::FunctionDecl *fdecl = ce->getDirectCallee();
     if(fdecl) {
         std::string callee = ce->getDirectCallee()->getQualifiedNameAsString();
+
+        //If no forward declaration was made, but we are still calling the
+        //function, C++ magic may be occuring [Just make node here and have
+        //somewhat opaque warnings later on (but no crashes)]
+        if(!gbi->callees.has(callee)) {
+            gbi->callees.add(callee, gbi->current_tu, ce->getDirectCallee());
+            //warnx("!!making a callee live!! {%s}", callee.c_str());
+        }
+
         gbi->calls.add(gbi->callees[caller],gbi->callees[callee],gbi->current_tu,ce);
 
         for(unsigned i=0; i<fdecl->getNumParams(); ++i)
@@ -238,7 +249,6 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
                         }
 
                         std::string param_name = callee_decl->getParamDecl(i)->getQualifiedNameAsString();
-                        callee_decl->dump();
                         Callee *call = NULL;
 
                         //Find callee (which is assumed to follow function
@@ -395,7 +405,9 @@ bool GraphAstHelper::VisitFunctionDecl(clang::FunctionDecl *fdecl)
 
         //Find Calls within function
         GraphStmtHelper gsh(gbi, fname);
-        gsh.Visit(fdecl->getBody());
+
+        if(fdecl->getBody()) //Not guarenteed for templates
+            gsh.Visit(fdecl->getBody());
     }
     gbi->annotation_check(gbi->callees[fname], fdecl);
 

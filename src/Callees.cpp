@@ -17,6 +17,11 @@ std::string Callee::getName(void) const
 {
     using clang::FunctionDecl;
     using clang::dyn_cast_or_null;
+
+    //Assuming strange builtin is being viewed
+    if(!DECL && name[0] == '_')
+        return name;
+
     FunctionDecl *fdecl = dyn_cast_or_null<FunctionDecl>(DECL);
     if(fdecl)
         return fdecl->getQualifiedNameAsString();

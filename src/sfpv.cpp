@@ -24,8 +24,9 @@ void add_manual_whitelist(const char *fname, Callees &e)
     while(in) {
         std::string word;
         in >> word;
-        if(e.has(word))
-            e[word]->ext_realtime();
+        for(Callee *c : e)
+            if(c->getName() == word)
+                c->ext_realtime();
     }
     in.close();
 }
@@ -66,6 +67,8 @@ bool file_exists(const char *filename)
         if(has_ext(filename, "cpp"))
             return true;
         if(has_ext(filename, "c"))
+            return true;
+        if(has_ext(filename, "cc"))
             return true;
         if(has_ext(filename, "C"))
             return true;
@@ -165,7 +168,7 @@ int main(int argc, char **argv)
         if(file_exists(argv[i])) {
             tus[units++] = new TranslationUnit(argv[i]);
         } else
-            warn("Skipping invalid file %s...\n", argv[i]);
+            warnx("Skipping invalid file %s...", argv[i]);
     }
 
     if(!units) {
