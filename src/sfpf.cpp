@@ -1,6 +1,6 @@
 #include "TranslationUnit.h"
-#include "FuncCalls.h"
-#include "FuncEntries.h"
+#include "Calls.h"
+#include "Callees.h"
 #include "ReverseDeductions.h"
 #include "GraphBuilder.h"
 #include "Errors.h"
@@ -19,15 +19,15 @@
 
 
 //Perform manual annotations to the function entries
-void add_manual_annotations(const char *fname, FuncEntries &e)
+void add_manual_annotations(const char *fname, Callees &e)
 {
     std::ifstream in(fname);
     while(in) {
         std::string word;
         in >> word;
-        if(e.has(word)) {
-            e[word].ext_realtime();
-        }
+        for(Callee *c : e)
+            if(c->getName() == word)
+                c->ext_realtime();
     }
     in.close();
 
@@ -163,23 +163,23 @@ int main(int argc, char **argv)
         add_manual_annotations(whitelist_file, gb.getFunctions());
     }
     {
-        FuncEntries &fe = gb.getFunctions();
+        Callees &fe = gb.getFunctions();
         fe.add("__builtin_va_start",NULL,NULL);
         fe.add("__builtin_va_end",NULL,NULL);
-        fe["__builtin_va_start"].ext_realtime();
-        fe["__builtin_va_end"].ext_realtime();
-        fe["__builtin_va_start"].define();
-        fe["__builtin_va_end"].define();
+        fe["__builtin_va_start"]->ext_realtime();
+        fe["__builtin_va_end"]->ext_realtime();
+        fe["__builtin_va_start"]->define();
+        fe["__builtin_va_end"]->define();
         if(fe.has("malloc"))
-            fe["malloc"].ext_not_realtime("Memory");
+            fe["malloc"]->ext_not_realtime("Memory");
         if(fe.has("free"))
-            fe["free"].ext_not_realtime("Memory");
+            fe["free"]->ext_not_realtime("Memory");
         if(fe.has("calloc"))
-            fe["calloc"].ext_not_realtime("Memory");
+            fe["calloc"]->ext_not_realtime("Memory");
         if(fe.has("operator new"))
-            fe["operator new"].ext_not_realtime("Memory");
+            fe["operator new"]->ext_not_realtime("Memory");
         if(fe.has("operator delete"))
-            fe["operator delete"].ext_not_realtime("Memory");
+            fe["operator delete"]->ext_not_realtime("Memory");
     }
 
     //Note that the reverse deduction system will produce nonsense with an

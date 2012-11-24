@@ -1,8 +1,8 @@
 #include "ReverseDeductions.h"
 #include "Errors.h"
 #include "GraphBuilder.h"
-#include "FuncCalls.h"
-#include "FuncEntries.h"
+#include "Calls.h"
+#include "Callees.h"
 #include "TranslationUnit.h"
 
 #include <string>
@@ -11,7 +11,7 @@
 
 #pragma clang diagnostic ignored "-Wc++11-extensions"
 
-typedef CallPair Deduction;
+typedef Call Deduction;
 class ReverseDeductionsImpl
 {
     public:
@@ -24,7 +24,7 @@ class ReverseDeductionsImpl
         void deduce_nrt(Deduction d);
         void perform_deductions(GraphBuilder *gb);
         void find_all(GraphBuilder *gb);
-        bool known(FuncEntry e) const;
+        bool known(Callee e) const;
 
         GraphBuilder *gb;
     private:
@@ -67,7 +67,7 @@ void ReverseDeductionsImpl::print(void) const
 
     printf("Deduced Unsafe Functions\n");
     for(Deduction d: nrt_deductions)
-        printf("%30s :=> %30s\n", d.first.c_str(), d.second.c_str());
+        printf("%30s :=> %30s\n", d.first->name.c_str(), d.second->name.c_str());
 }
 
 void ReverseDeductionsImpl::print_whitelist(void) const
@@ -78,8 +78,8 @@ void ReverseDeductionsImpl::print_whitelist(void) const
 
 bool ReverseDeductionsImpl::rt_p(std::string fname) const
 {
-    FuncEntries &fe = gb->getFunctions();
-    if(fe.has(fname) && fe[fname].realtime_p())
+    Callees &fe = gb->getFunctions();
+    if(fe.has(fname) && fe[fname]->realtime_p())
         return true;
 
     for(std::string d: rt_deductions)
@@ -90,12 +90,12 @@ bool ReverseDeductionsImpl::rt_p(std::string fname) const
 
 bool ReverseDeductionsImpl::nrt_p(std::string fname) const
 {
-    FuncEntries &fe = gb->getFunctions();
-    if(fe.has(fname) && fe[fname].not_realtime_p())
+    Callees &fe = gb->getFunctions();
+    if(fe.has(fname) && fe[fname]->not_realtime_p())
         return true;
 
     for(auto d: nrt_deductions)
-        if(d.first == fname)
+        if(d.first->getName() == fname)
             return true;
     return false;
 }
@@ -111,9 +111,9 @@ void ReverseDeductionsImpl::deduce_rt(std::string d)
 
 void ReverseDeductionsImpl::perform_deductions(GraphBuilder *gb)
 {
-    FuncEntries &entries = gb->getFunctions();
+    Callees &entries = gb->getFunctions();
     for(auto pair:entries) {
-        FuncEntry e = pair.second;
+        Callee &e = *pair;
 
         //Don't bother with functions with deduced safety
         if(known(e) || !e.defined_p())
@@ -121,9 +121,9 @@ void ReverseDeductionsImpl::perform_deductions(GraphBuilder *gb)
 
         //Try to deduce non-realtime
         //If any call is to an unsafe function, this function is unsafe
-        for(CallPair c:gb->getCalls()) {
-            if(c.first == e.name && nrt_p(c.second)) {
-                deduce_nrt(c);
+        for(Call *c:gb->getCalls()) {
+            if(c->first->getName() == e.name && nrt_p(c->second->getName())) {
+                deduce_nrt(*c);
                 goto next;
             }
         }
@@ -132,8 +132,8 @@ void ReverseDeductionsImpl::perform_deductions(GraphBuilder *gb)
         //Try to deduce realtime
         //If all calls are to safe functions, this function is safe
         //FIXME to postpone complexity recursion is hardcoded
-        for(CallPair c:gb->getCalls()) {
-            if(c.first == e.name && c.first != c.second &&!rt_p(c.second)) {
+        for(Call *c:gb->getCalls()) {
+            if(c->first->getName() == e.name && c->first->getName() != c->second->getName() &&!rt_p(c->second->getName())) {
                 goto next;
             }
         }
@@ -152,7 +152,7 @@ void ReverseDeductionsImpl::find_all(GraphBuilder *gb)
     } while(len != length());
 }
 
-bool ReverseDeductionsImpl::known(FuncEntry e) const
+bool ReverseDeductionsImpl::known(Callee e) const
 {
     return rt_p(e.name)||nrt_p(e.name);
 }

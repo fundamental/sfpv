@@ -29,9 +29,9 @@ add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp src/Deductions.cpp
     src/TranslationUnit.cpp src/Calls.cpp src/Callees.cpp src/sfpv.cpp)
 target_link_libraries (sfpv  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES} dl pthread)
 
-#add_executable (sfpf src/Errors.cpp src/GraphBuilder.cpp src/ReverseDeductions.cpp
-#    src/TranslationUnit.cpp src/Calls.cpp src/FuncEntries.cpp src/sfpf.cpp)
-#target_link_libraries (sfpf  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
+add_executable (sfpf src/Errors.cpp src/GraphBuilder.cpp src/ReverseDeductions.cpp
+    src/TranslationUnit.cpp src/Calls.cpp src/Callees.cpp src/sfpf.cpp)
+target_link_libraries (sfpf  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES} dl pthread)
 
 ######################################################################
 #               Tests to verify it works                             #
