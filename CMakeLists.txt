@@ -20,10 +20,14 @@ set (CLANG_LIBRARIES clangFrontend clangDriver clangSerialization  clangParse
 add_definitions (-fno-rtti)
 set (CMAKE_CXX_COMPILER clang++)
 
+execute_process(COMMAND llvm-config --libs
+    OUTPUT_VARIABLE LLVM_LIBRARIES
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 add_definitions (-DVERSION="${sfpv_VERSION_MAJOR}.${sfpv_VERSION_MINOR}")
 add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp src/Deductions.cpp
     src/TranslationUnit.cpp src/Calls.cpp src/Callees.cpp src/sfpv.cpp)
-target_link_libraries (sfpv  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES})
+target_link_libraries (sfpv  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES} dl pthread)
 
 #add_executable (sfpf src/Errors.cpp src/GraphBuilder.cpp src/ReverseDeductions.cpp
 #    src/TranslationUnit.cpp src/Calls.cpp src/FuncEntries.cpp src/sfpf.cpp)
