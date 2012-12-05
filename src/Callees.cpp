@@ -45,6 +45,12 @@ class CalleesImpl
     public:
         std::map<std::string, Callee*> fmap;
         std::set<Callee*> callees;
+
+        ~CalleesImpl(void)
+        {
+            for(Callee *c:callees)
+                delete c;
+        }
 };
 
 Callees::Callees(void)

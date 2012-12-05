@@ -5,8 +5,15 @@
 
 struct CallsImpl
 {
+    ~CallsImpl(void);
     std::set<Call*> cpair;
 };
+
+CallsImpl::~CallsImpl(void)
+{
+    for(auto a:cpair)
+        delete a;
+}
 
 Calls::Calls(void)
 {
