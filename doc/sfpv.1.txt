@@ -1,0 +1,48 @@
+SFPV(1)
+=======
+:doctype: manpage
+
+NAME
+----
+sfpv - static function property verification a C/C++ static analysis tool
+
+SYNOPSIS
+--------
+*sfpv* ['OPTIONS'] FILES
+
+DESCRIPTION
+-----------
+
+*sfpv* is a clang based static analysis tool to verify that functions have some
+listed property through the use of annotations and a basic deduction system.
+The primary goal of this program is to show realtime safety bugs in audio
+software, though it should eventually grow to be much more general than this.
+
+OPTIONS
+-------
+
+*-v*::
+    Verbose mode; This option provides a large amount of diagnostic
+    information.
+*-V*::
+    Prints the version of the program and exits
+*-h*::
+    Prints the help text and exits
+*-W* File::
+    Accepts a whitelist file of functions that should be assumed safe by sfpv.
+    The whitelist file consists of a series of function names delimited by any
+    whitespace. Note that only one whitelist file may be provided for each
+    invocation.
+*-C* Options::
+    Accepts clang options directly in the form of a string containing clang
+    arguments delimited by spaces. Note that only one Option string can be
+    provided per each invocation.
+
+BUGS
+----
+Please report any bugs to the bugtracker
+    http://github.com/fundamental/sfpv/issues
+
+AUTHOR
+------
+sfpv was written by Mark McCurry.
