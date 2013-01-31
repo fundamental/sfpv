@@ -25,7 +25,8 @@ class TranslationUnitImpl
     public:
         ~TranslationUnitImpl(void)
         {
-            ci.getDiagnosticClient().EndSourceFile();
+            fprintf(stderr, "hm, ah, hrum...\n");
+            //ci.getDiagnosticClient().EndSourceFile();
         }
         clang::CompilerInstance ci;
         std::string name;
@@ -89,13 +90,16 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
     //Hardcoded llvm system path
     llvm::sys::Path path(CLANG_LOCATION);
 
-    clang::TextDiagnosticPrinter* diagnostic_client =
-        new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
+    //clang::TextDiagnosticPrinter* diagnostic_client =
+    //    new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
+    clang::DiagnosticOptions diags = clang::DiagnosticOptions();
+
 
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_id(new clang::DiagnosticIDs());
-    clang::DiagnosticsEngine diagnostics(diagnostic_id, diagnostic_client);
-    clang::driver::Driver driver(path.str(), llvm::sys::getDefaultTargetTriple(), "a.out", false,
-            diagnostics);
+    clang::DiagnosticsEngine *diagnostics =
+        new clang::DiagnosticsEngine(diagnostic_id, &diags);
+    clang::driver::Driver driver(path.str(), llvm::sys::getDefaultTargetTriple(), "a.out",
+            *diagnostics);
 
 
     driver.setTitle("Magical Magic");
@@ -128,7 +132,7 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
     const char** args_end = args_start + cc_arguments.size();
     llvm::OwningPtr<clang::CompilerInvocation> invocation(new clang::CompilerInvocation);
     clang::CompilerInvocation::CreateFromArgs(*invocation,
-            args_start, args_end, diagnostics);
+            args_start, args_end, *diagnostics);
     invocation->getFrontendOpts().DisableFree = false;
 
     // Show the invocation, with -v.
@@ -142,11 +146,11 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
     // The caller will be responsible for freeing this.
     ci.setInvocation(invocation.take());
 
-    ci.createDiagnostics(0,NULL);
+    ci.createDiagnostics();//0,NULL);
 
     TargetOptions to;
     to.Triple = llvm::sys::getDefaultTargetTriple();
-    TargetInfo *pti = TargetInfo::CreateTargetInfo(ci.getDiagnostics(), to);
+    TargetInfo *pti = TargetInfo::CreateTargetInfo(ci.getDiagnostics(), &to);
     ci.setTarget(pti);
 
     ci.createFileManager();

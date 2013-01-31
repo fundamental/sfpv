@@ -7,7 +7,10 @@
 # LLVM_FOUND            - True when llvm is found
 # LLVM_INSTALL_PREFIX   - Installation location of llvm
 
-find_program(LLVM_CONFIG NAMES llvm-config DOC "llvm-config Configuration Helper")
+find_program(LLVM_CONFIG
+    NAMES llvm-config
+    PATHS /usr/local/bin /usr/bin
+    DOC "llvm-config Configuration Helper")
 if(LLVM_CONFIG STREQUAL "LLVM_CONFIG-NOTFOUND")
     set(LLVM_FOUND 1)
 endif()

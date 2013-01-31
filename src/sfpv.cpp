@@ -209,10 +209,10 @@ int main(int argc, char **argv)
     //Get the actual errors from contradictions/ambiguities
     int result = ded.find_inconsistent(&gb);
 
-    //Cleanup
-    for(int i=0; i<argc-1; ++i)
-        delete tus[i];
-    delete[] tus;
+    //Cleanup XXX Clang dies oddly here
+    //for(int i=0; i<argc-1; ++i)
+    //    delete tus[i];
+    //delete[] tus;
 
     return result;
 }

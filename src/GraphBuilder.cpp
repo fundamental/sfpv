@@ -4,6 +4,7 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/StmtVisitor.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/Attr.h>
 #include <err.h>
 
 #pragma clang diagnostic ignored "-Wc++11-extensions"
