@@ -5,6 +5,7 @@
 #include <clang/AST/StmtVisitor.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/AST/Attr.h>
+#include <stdio.h>
 #include <err.h>
 
 #pragma clang diagnostic ignored "-Wc++11-extensions"
@@ -28,11 +29,24 @@ class GraphStmtHelper :public clang::StmtVisitor<GraphStmtHelper>
         VisitChildren(s);
     }
 
+    //void VisitExpr(clang::Expr *e)
+    //{
+    //    fprintf(stderr, "Bla Bla Bla<<<<<<<<<<<<<<\n");
+    //    e->dumpColor();
+    //    fprintf(stderr, "Bla Bla Bla>>>>>>>>>>>>>>\n");
+    //}
+
     void VisitBinAssign(clang::BinaryOperator *eq);
     void VisitDeclStmt(clang::DeclStmt *ds);
     void VisitCallExpr(clang::CallExpr *ce);
     void VisitCXXNewExpr(clang::CXXNewExpr *ne);
     void VisitCXXDeleteExpr(clang::CXXDeleteExpr *de);
+    void VisitLambdaExpr(clang::LambdaExpr *le)
+    {
+        fprintf(stderr, "Bla Bla Bla<<<<<<<<<<<<<<\n");
+        le->dumpColor();
+        fprintf(stderr, "Bla Bla Bla>>>>>>>>>>>>>>\n");
+    }
 
     void VisitChildren(clang::Stmt *S)
     {
@@ -248,6 +262,9 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
                             warnx("Unexpected NULL object...");
                             continue;
                         }
+                        //XXX Check if parameter name should come from callee_decl
+                        if(callee_decl->getNumParams() <= i)
+                            continue;
 
                         std::string param_name = callee_decl->getParamDecl(i)->getQualifiedNameAsString();
                         Callee *call = NULL;
@@ -382,6 +399,7 @@ void GraphBuilderImpl::annotation_check(Callee *c, clang::Decl *decl)
 
 bool GraphAstHelper::VisitFunctionDecl(clang::FunctionDecl *fdecl)
 {
+    //fdecl->dump();
 
     using clang::dyn_cast;
     clang::CXXMethodDecl *method = dyn_cast<clang::CXXMethodDecl>(fdecl);

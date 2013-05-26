@@ -19,14 +19,18 @@ std::string Callee::getName(void) const
     using clang::dyn_cast_or_null;
 
     //Assuming strange builtin is being viewed
-    if(!DECL && name[0] == '_')
+    if(!DECL && (name[0] == '_' || name.substr(0,5) == "std::"))
         return name;
 
     FunctionDecl *fdecl = dyn_cast_or_null<FunctionDecl>(DECL);
     if(fdecl)
         return fdecl->getQualifiedNameAsString();
-    warnx("could not get function name...");
-    return "NULL";
+    warnx("could not get function name... (%p) (%s)", DECL, name.c_str());
+    if(DECL)
+        DECL->dumpColor();
+    else
+        warnx("A null DECL, that is odd...");
+    return name;//"NULL";
 }
 
 std::string FuncPtrCallee::getName(void) const

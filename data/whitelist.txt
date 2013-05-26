@@ -8,9 +8,12 @@ memset memcpy
 strlen strcpy
 jack_port_get_buffer
 jack_midi_clear_buffer jack_midi_get_event_count jack_midi_event_get
+jack_get_sample_rate jack_ringbuffer_read_space jack_ringbuffer_read_advance
 jack_transport_query
+std::__throw_bad_function_call
 sem_post sem_getvalue
 jack_ringbuffer_read jack_ringbuffer_write
 (process_callback)
 isalnum isalpha isascii isblank iscntrl isdigit isgraph islower isprint ispunct
 isspace isupper isxdigit
+__builtin_memset
