@@ -59,6 +59,8 @@ bool file_exists(const char *filename)
             return true;
         if(has_ext(filename, "h"))
             return true;
+        if(has_ext(filename, "hpp"))
+            return true;
 
         //Found nothing
         return false;

@@ -6,17 +6,29 @@ set (sfpv_VERSION_MINOR 1)
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 #LLVM
-find_package(LLVM 3.1 REQUIRED)
+find_package(LLVM 3.5 REQUIRED)
 
 include_directories (${LLVM_INCLUDE_DIRS})
 link_directories (${LLVM_LIBRARY_DIRS})
 add_definitions (${LLVM_DEFINITIONS})
 add_definitions (-DCLANG_LOCATION="${LLVM_INSTALL_PREFIX}/bin/clang")
 
-#Clang
-set (CLANG_LIBRARIES clangFrontend clangDriver clangSerialization  clangParse
-    clangSema  clangAnalysis  clangRewrite  clangEdit  clangAST  clangLex
-    clangBasic)
+
+#Clang (I have no idea why ncurses suddenly became a dep of libclang)
+set (CLANG_LIBRARIES
+         clang
+         clangDriver
+         clangFrontend
+         clangParse
+         clangSema
+         clangEdit
+         clangLex
+         clangAST
+         clangAnalysis
+         clangSerialization
+         clangBasic
+         ncurses)
+
 add_definitions (-fno-rtti)
 set (CMAKE_CXX_COMPILER clang++)
 
@@ -71,6 +83,9 @@ set_property (TEST malloc-blacklist PROPERTY PASS_REGULAR_EXPRESSION
 add_test (func-ptr sfpv ${SRC}/test/function-pointer.c)
 set_property (TEST func-ptr PROPERTY PASS_REGULAR_EXPRESSION
     "error:")
+#add_test (lambda-call sfpv ${SRC}/test/lambda-call.cpp)
+#set_property (TEST lambda-call PROPERTY PASS_REGULAR_EXPRESSION
+#    "error: Realtime safety violation, malloc_of_doooooooooom called from a safe function, but it was annotated non-realtime")
 add_test (func-ptr-parameters sfpv ${SRC}/test/function-pointer-call.cpp)
 set_property (TEST func-ptr-parameters PROPERTY PASS_REGULAR_EXPRESSION
     "error: Realtime safety violation, malloc_of_doooooooooom called from a safe function, but it was annotated non-realtime")

@@ -88,7 +88,7 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
     CompilerInstance &ci = impl->ci;
 
     //Hardcoded llvm system path
-    llvm::sys::Path path(CLANG_LOCATION);
+    const char *path = CLANG_LOCATION;
 
     //clang::TextDiagnosticPrinter* diagnostic_client =
     //    new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
@@ -98,7 +98,7 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_id(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine *diagnostics =
         new clang::DiagnosticsEngine(diagnostic_id, &diags);
-    clang::driver::Driver driver(path.str(), llvm::sys::getDefaultTargetTriple(), "a.out",
+    clang::driver::Driver driver(path, llvm::sys::getDefaultTargetTriple(), "a.out",
             *diagnostics);
 
 
@@ -137,8 +137,7 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
 
     // Show the invocation, with -v.
     if (invocation->getHeaderSearchOpts().Verbose) {
-        llvm::errs() << "clang invocation:\n";
-        compilation->PrintJob(llvm::errs(), compilation->getJobs(), "\n", true);
+        llvm::errs() << "clang invocation: unknown because they changed the API\n";
         llvm::errs() << "\n";
     }
 
