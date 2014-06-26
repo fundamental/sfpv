@@ -12,7 +12,7 @@ How To Build
 
 First make sure you have copies of:
 
-    - llvm/clang 3.1 or better
+    - llvm/clang 3.5 or better
     - cmake 2.8 or better
 
 Then run
