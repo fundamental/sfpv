@@ -5,7 +5,8 @@ exp expf expl
 pow powf powl
 fmod fmodf fmodl
 memset memcpy
-strlen strcpy
+strlen strcpy strcmp
+index
 jack_port_get_buffer
 jack_midi_clear_buffer jack_midi_get_event_count jack_midi_event_get
 jack_get_sample_rate jack_ringbuffer_read_space jack_ringbuffer_read_advance
@@ -17,3 +18,29 @@ jack_ringbuffer_read jack_ringbuffer_write
 isalnum isalpha isascii isblank iscntrl isdigit isgraph islower isprint ispunct
 isspace isupper isxdigit
 __builtin_memset
+__assert_fail
+__builtin_va_start
+__builtin_va_end
+__builtin_expect
+
+
+
+rtosc_message
+rtosc_vmessage
+rtosc_amessage
+rtosc_narguments
+rtosc_type
+rtosc_argument
+rtosc_message_length
+rtosc_message_ring_length
+rtosc_argument_string
+rtosc_bundle
+rtosc_bundle_elements
+rtosc_bundle_fetch
+rtosc_bundle_size
+rtosc_bundle_p
+rtosc_bundle_timetag
+rtosc_match
+rtosc_match_path
+
+rtosc::Ports::dispatch
