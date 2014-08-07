@@ -6,16 +6,11 @@ set (sfpv_VERSION_MINOR 1)
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 #LLVM
-find_package(LLVM 3.5 REQUIRED)
 
-include_directories (${LLVM_INCLUDE_DIRS})
-link_directories (${LLVM_LIBRARY_DIRS})
-add_definitions (${LLVM_DEFINITIONS})
-add_definitions (-DCLANG_LOCATION="${LLVM_INSTALL_PREFIX}/bin/clang")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 
 #Clang (I have no idea why ncurses suddenly became a dep of libclang)
+#      (And now zlib is suddenly on that list too...)
 set (CLANG_LIBRARIES
          clang
          clangDriver
@@ -28,7 +23,8 @@ set (CLANG_LIBRARIES
          clangAnalysis
          clangSerialization
          clangBasic
-         ncurses)
+         ncurses
+         z)
 
 add_definitions (-fno-rtti)
 set (CMAKE_CXX_COMPILER clang++)
@@ -36,15 +32,38 @@ set (CMAKE_CXX_COMPILER clang++)
 execute_process(COMMAND llvm-config --libs
     OUTPUT_VARIABLE LLVM_LIBRARIES
     OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND llvm-config --cxxflags
+    OUTPUT_VARIABLE LLVM_FLAGS
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND llvm-config --version
+    OUTPUT_VARIABLE LLVM_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND llvm-config --bindir
+    OUTPUT_VARIABLE LLVM_BIN_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND llvm-config --libdir
+    OUTPUT_VARIABLE LLVM_LIB_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+add_definitions (-DCLANG_LOCATION="${LLVM_BIN_DIR}/clang")
+link_directories (${LLVM_LIB_DIR})
+
+if (LLVM_VERSION VERSION_LESS "3.5")
+    add_definitions(-DOLD_LLVM)
+endif ()
+
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_FLAGS} -std=c++11")
+message(status "Build Flags '${CMAKE_CXX_FLAGS}'")
 
 add_definitions (-DVERSION="${sfpv_VERSION_MAJOR}.${sfpv_VERSION_MINOR}")
 add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp src/Deductions.cpp
     src/TranslationUnit.cpp src/Calls.cpp src/Callees.cpp src/sfpv.cpp)
-target_link_libraries (sfpv  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES} dl pthread)
+target_link_libraries (sfpv  ${CLANG_LIBRARIES}  ${LLVM_LIBRARIES} dl pthread)
 
 add_executable (sfpf src/Errors.cpp src/GraphBuilder.cpp src/ReverseDeductions.cpp
     src/TranslationUnit.cpp src/Calls.cpp src/Callees.cpp src/sfpf.cpp)
-target_link_libraries (sfpf  ${CLANG_LIBRARIES} ${LLVM_LIBRARIES} dl pthread)
+target_link_libraries (sfpf  ${CLANG_LIBRARIES}  ${LLVM_LIBRARIES} dl pthread)
 
 ######################################################################
 #               Tests to verify it works                             #

@@ -154,7 +154,11 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
 
     ci.createFileManager();
     ci.createSourceManager(ci.getFileManager());
+#ifdef OLD_LLVM
+    ci.createPreprocessor();
+#else
     ci.createPreprocessor(clang::TU_Complete);
+#endif
     ci.createASTContext();
 
     //Initialize preprocessor
