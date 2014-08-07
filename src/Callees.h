@@ -15,6 +15,7 @@ class Callee
         Callee(std::string str, class TranslationUnit *tu=NULL, class clang::Decl *decl=NULL)
             :name(str),TU(tu),DECL(decl),RT(false),ext_RT(false),nRT(false), ext_nRT(false), defined(false)
         {}
+        virtual ~Callee(){}
 
         virtual void display(void) const;
         void realtime(void) { RT = true; }

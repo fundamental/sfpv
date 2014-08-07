@@ -5,25 +5,51 @@ exp expf expl
 pow powf powl
 fmod fmodf fmodl
 memset memcpy
-strlen strcpy strcmp
+strlen strcpy strcmp snprintf
 index
 jack_port_get_buffer
 jack_midi_clear_buffer jack_midi_get_event_count jack_midi_event_get
 jack_get_sample_rate jack_ringbuffer_read_space jack_ringbuffer_read_advance
 jack_transport_query
 std::__throw_bad_function_call
-sem_post sem_getvalue
+sem_post sem_getvalue sem_trywait
+pthread_mutex_trylock
+pthread_mutex_unlock
 jack_ringbuffer_read jack_ringbuffer_write
 (process_callback)
 isalnum isalpha isascii isblank iscntrl isdigit isgraph islower isprint ispunct
 isspace isupper isxdigit
+
+
+strstr
+memmove
+strncpy
+sinh
+log
+floor
+floorf
+sqrtf
+
 __builtin_memset
 __assert_fail
 __builtin_va_start
 __builtin_va_end
 __builtin_expect
+__builtin_fabs
+__builtin_fabsf
+__builtin_fabsl
+__builtin_cabs
+__builtin_cabsl
+__builtin_cabsf
+__builtin_labs
+__builtin_llabs
+__builtin_carg
+__builtin_cargl
+__builtin_cargf
+__builtin_memcmp
+__builtin_strlen
 
-
+fftw_execute
 
 rtosc_message
 rtosc_vmessage
@@ -44,3 +70,9 @@ rtosc_match
 rtosc_match_path
 
 rtosc::Ports::dispatch
+
+
+hacks_here
+sem_wait
+MidiEvent::operator=
+std::basic_ostream<char, std::char_traits<char> >::_M_insert 

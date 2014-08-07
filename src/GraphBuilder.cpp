@@ -313,6 +313,10 @@ void GraphStmtHelper::VisitCallExpr(clang::CallExpr *ce)
 
                 if(callee)
                     gbi->calls.add(gbi->callees[caller],callee,gbi->current_tu,ce);
+                else if(tmp == "__convf")
+                    ;//ignore
+                else if(tmp == "__pf")
+                    ;//ignore
                 else
                     warnx("could not find callee %s\n", tmp.c_str());
             }

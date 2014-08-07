@@ -19,7 +19,7 @@ std::string Callee::getName(void) const
     using clang::dyn_cast_or_null;
 
     //Assuming strange builtin is being viewed
-    if(!DECL && (name[0] == '_' || name.substr(0,5) == "std::"))
+    if(!DECL && (name[0] == '_' || name.substr(0,5) == "std::" || strstr(name.c_str(), "::~")))
         return name;
 
     FunctionDecl *fdecl = dyn_cast_or_null<FunctionDecl>(DECL);

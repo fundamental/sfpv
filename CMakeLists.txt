@@ -26,7 +26,7 @@ set (CLANG_LIBRARIES
          ncurses
          z)
 
-add_definitions (-fno-rtti)
+add_definitions (-fno-rtti -Wno-unknown-warning-option)
 set (CMAKE_CXX_COMPILER clang++)
 
 execute_process(COMMAND llvm-config --libs
