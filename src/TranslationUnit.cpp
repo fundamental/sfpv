@@ -3,7 +3,7 @@
 #include "Errors.h"
 
 #include <llvm/Support/Host.h>
-#include <llvm/Support/PathV1.h>
+#include <llvm/ADT/OwningPtr.h>
 #include <llvm/Support/system_error.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Basic/TargetOptions.h>
@@ -154,7 +154,7 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
 
     ci.createFileManager();
     ci.createSourceManager(ci.getFileManager());
-    ci.createPreprocessor();
+    ci.createPreprocessor(clang::TU_Complete);
     ci.createASTContext();
 
     //Initialize preprocessor

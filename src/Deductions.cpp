@@ -59,8 +59,9 @@ void DeductionsImpl::print_path(Callee *callee, GraphBuilder *gb)
             if(d->CE) {
                 diag->Report(d->CE->getLocStart(), error_realtime_saftey_trace)
                     << d->first->getName();
-            } else
-                diag->Report(error_realtime_safety_class) << d->second << d->first;
+            } else {
+                diag->Report(error_realtime_safety_class) << d->second->name << d->first->name;
+            }
 
             print_path(d->first, gb);
             return;
