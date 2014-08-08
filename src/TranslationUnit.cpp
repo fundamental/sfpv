@@ -4,7 +4,9 @@
 
 #include <llvm/Support/Host.h>
 #include <llvm/ADT/OwningPtr.h>
+#ifdef OLD_LLVM
 #include <llvm/Support/system_error.h>
+#endif
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Basic/TargetOptions.h>
 #include <clang/Basic/TargetInfo.h>
@@ -98,8 +100,12 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_id(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine *diagnostics =
         new clang::DiagnosticsEngine(diagnostic_id, &diags);
+#ifdef OLD_LLVM
     clang::driver::Driver driver(path, llvm::sys::getDefaultTargetTriple(), "a.out",
             *diagnostics);
+#else
+    clang::driver::Driver driver(path, llvm::sys::getDefaultTargetTriple(), *diagnostics);
+#endif
 
 
     driver.setTitle("Magical Magic");
@@ -147,9 +153,15 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
 
     ci.createDiagnostics();//0,NULL);
 
+#ifdef OLD_LLVM
     TargetOptions to;
     to.Triple = llvm::sys::getDefaultTargetTriple();
     TargetInfo *pti = TargetInfo::CreateTargetInfo(ci.getDiagnostics(), &to);
+#else
+    std::shared_ptr<TargetOptions> to{new TargetOptions};
+    to->Triple = llvm::sys::getDefaultTargetTriple();
+    TargetInfo *pti = TargetInfo::CreateTargetInfo(ci.getDiagnostics(), to);
+#endif
     ci.setTarget(pti);
 
     ci.createFileManager();
@@ -168,7 +180,12 @@ void TranslationUnit::collect(GraphBuilder *gb, char *clang_options)
 
     //Select File
     const FileEntry *pFile = ci.getFileManager().getFile(impl->name);
+#ifdef OLD_LLVM
     ci.getSourceManager().createMainFileID(pFile);
+#else
+    auto t = ci.getSourceManager().translateFile(pFile);
+    ci.getSourceManager().setMainFileID(t);
+#endif
 
     //Set diagnostics
     ci.getDiagnosticClient().BeginSourceFile(ci.getLangOpts(),

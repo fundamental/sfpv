@@ -7,6 +7,7 @@ set (sfpv_VERSION_MINOR 1)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 #LLVM
 
+#include(cotire)
 
 
 #Clang (I have no idea why ncurses suddenly became a dep of libclang)
@@ -60,10 +61,12 @@ add_definitions (-DVERSION="${sfpv_VERSION_MAJOR}.${sfpv_VERSION_MINOR}")
 add_executable (sfpv src/Errors.cpp src/GraphBuilder.cpp src/Deductions.cpp
     src/TranslationUnit.cpp src/Calls.cpp src/Callees.cpp src/sfpv.cpp)
 target_link_libraries (sfpv  ${CLANG_LIBRARIES}  ${LLVM_LIBRARIES} dl pthread)
+#cotire (sfpv)
 
 add_executable (sfpf src/Errors.cpp src/GraphBuilder.cpp src/ReverseDeductions.cpp
     src/TranslationUnit.cpp src/Calls.cpp src/Callees.cpp src/sfpf.cpp)
 target_link_libraries (sfpf  ${CLANG_LIBRARIES}  ${LLVM_LIBRARIES} dl pthread)
+#cotire (sfpf)
 
 ######################################################################
 #               Tests to verify it works                             #
