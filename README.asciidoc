@@ -1,6 +1,10 @@
 sfpv - Static Function Property Verification
 ============================================
 
+THIS PROJECT IS NO LONGER MAINTAINED PLEASE SEE THE LESS BUGGY REPLACEMENT AT
+http://github.com/fundamental/stoat
+
+
 This is a static analysis tool built upon clang to verify annotated function
 properties in C/C++ code. It is primarily intended to verify realtime safety of
 audio processing code, but as the name implies, it shall evolve into something
